@@ -1,1 +1,1 @@
-Social Media Influence Simulator 🚀
+Social Media Influencer Simulator 🚀
