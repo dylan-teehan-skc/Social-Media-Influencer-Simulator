@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import List
 from enum import Enum
-from .follower import Follower, Comment
 
 class Sentiment(Enum):
     LEFT = "left"
@@ -12,8 +11,8 @@ class Post:
     def __init__(self, content: str):
         self.content: str = content
         self.timestamp: datetime = datetime.now()
-        self.likes: List[Follower] = []
-        self.shares: List[Follower] = []
+        self.likes: int = 0
+        self.shares: int = 0
         self.sentiment: Sentiment = Sentiment.NEUTRAL
         self.comments: List[Comment] = []
     
@@ -23,14 +22,21 @@ class Post:
         # user reactions will depend on sentiment
         pass
 
-    def like(self, follower: Follower) -> None:
-        self.likes.append(follower)
+    def like(self) -> None:
+        self.likes += 1
         
-    def unlike(self, follower: Follower) -> None:
-        self.likes.remove(follower)
+    def unlike(self) -> None:
+        self.likes -= 1
 
-    def share(self, follower: Follower) -> None:
-        self.shares.append(follower)
+    def share(self) -> None:
+        self.shares += 1
 
-    def unshare(self, follower: Follower) -> None:
-        self.shares.remove(follower)
+    def unshare(self) -> None:
+        self.shares -= 1
+
+class Comment:
+    def __init__(self, content: str, sentiment: Sentiment, authorhandle: str):
+        self.content: str = content
+        self.sentiment: Sentiment = sentiment
+        self.timestamp: datetime = datetime.now()
+        self.author: str = authorhandle
