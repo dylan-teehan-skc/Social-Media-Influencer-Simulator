@@ -1,37 +1,29 @@
 import unittest
 from src.classes.post import Post
 
-class MockFollower:
-    """A mock follower class for testing purposes."""
-    pass
-
 class TestPost(unittest.TestCase):
 
     def test_like_post(self):
         post = Post("Test content")
-        follower = MockFollower()
-        post.like(follower)
-        self.assertIn(follower, post.likes, "Follower should be in the likes list")
+        post.like()
+        self.assertEqual(post.likes, 1, "Likes should be incremented to 1")
 
     def test_unlike_post(self):
         post = Post("Test content")
-        follower = MockFollower()
-        post.like(follower)
-        post.unlike(follower)
-        self.assertNotIn(follower, post.likes, "Follower should not be in the likes list")
+        post.like()
+        post.unlike()
+        self.assertEqual(post.likes, 0, "Likes should be decremented to 0")
 
     def test_share_post(self):
         post = Post("Test content")
-        follower = MockFollower()
-        post.share(follower)
-        self.assertIn(follower, post.shares, "Follower should be in the shares list")
+        post.share()
+        self.assertEqual(post.shares, 1, "Shares should be incremented to 1")
 
     def test_unshare_post(self):
         post = Post("Test content")
-        follower = MockFollower()
-        post.share(follower)
-        post.unshare(follower)
-        self.assertNotIn(follower, post.shares, "Follower should not be in the shares list")
+        post.share()
+        post.unshare()
+        self.assertEqual(post.shares, 0, "Shares should be decremented to 0")
 
 if __name__ == '__main__':
     unittest.main() 
