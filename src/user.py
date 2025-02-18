@@ -1,8 +1,7 @@
 class User:
-    def __init__(self, handle, avatar, bio):
+    def __init__(self, handle, bio):
         # Attributes
         self.handle = handle
-        self.avatar = avatar
         self.bio = bio
         self.followers = 0
         self.credibility_score = 0.0
