@@ -12,15 +12,17 @@ class Subject(ABC):
     def __init__(self):
         self._observers = []
 
+    @abstractmethod
     def attach(self, observer: Observer):
         """Attach an observer to the subject"""
-        self._observers.append(observer)
+        pass
 
+    @abstractmethod
     def detach(self, observer: Observer):
         """Detach an observer from the subject"""
-        self._observers.remove(observer)
+        pass
 
+    @abstractmethod
     def notify(self, post=None):
         """Notify all observers about an event"""
-        for observer in self._observers:
-            observer.update(self, post)
+        pass
