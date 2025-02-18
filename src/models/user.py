@@ -1,4 +1,4 @@
-from src.classes.observer import Subject, Observer
+from src.observer.observer import Subject, Observer
 
 class User(Subject):
     def __init__(self, handle, bio):

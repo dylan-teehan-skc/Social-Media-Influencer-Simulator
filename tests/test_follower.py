@@ -1,6 +1,6 @@
 import unittest
-from src.classes.follower import Follower
-from src.classes.post import Sentiment
+from models.follower import Follower
+from models.post import Sentiment
 
 class TestFollower(unittest.TestCase):
 

@@ -1,5 +1,5 @@
 import unittest
-from src.classes.post import Post
+from models.post import Post
 
 class TestPost(unittest.TestCase):
 

@@ -1,8 +1,8 @@
 from lib_config.config_loader import ConfigLoader
 from lib_utils.logger import setup_logger
 from src.services.logger_service import LoggerService
-from src.classes.user import User
-from src.classes.post import Post
+from src.models.user import User
+from src.models.post import Post
 import logging
 
 def main():
