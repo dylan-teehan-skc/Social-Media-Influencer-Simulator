@@ -1,6 +1,6 @@
 from typing import List
 from random import randint
-from .post import Post, Sentiment
+from .post import Post, Sentiment, Comment
 from datetime import datetime
 
 class Follower:
@@ -62,18 +62,10 @@ class Follower:
 
         if randint(1, 100) <= 30:
             comment = self._get_comment(alignment)
-            post.add_comment(Comment(comment, post.sentiment, self))
+            post.add_comment(Comment(comment, post.sentiment, self.handle))
 
         if alignment > 70:
             post.like(self)
             post.share(self)
         elif alignment > 40:
             post.like(self)
-
-
-class Comment:
-    def __init__(self, content: str, sentiment: Sentiment, author: Follower):
-        self.content: str = content
-        self.sentiment: Sentiment = sentiment
-        self.timestamp: datetime = datetime.now()
-        self.author: Follower = author

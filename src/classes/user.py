@@ -36,7 +36,3 @@ class User(Subject):
 
     def unfollow(self, user):
         pass
-
-    def update_credibility(self):
-        pass
-
