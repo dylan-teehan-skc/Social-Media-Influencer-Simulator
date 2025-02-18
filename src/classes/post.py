@@ -22,13 +22,13 @@ class Post:
         # user reactions will depend on sentiment
         pass
 
-    def like(self, follower: Follower) -> None:
+    def like(self) -> None:
         self.likes += 1
         
     def unlike(self) -> None:
         self.likes -= 1
 
-    def share(self, follower: Follower) -> None:
+    def share(self) -> None:
         self.shares += 1
 
     def unshare(self) -> None:
