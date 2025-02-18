@@ -21,8 +21,9 @@ def main():
     
     # Your application code here
     user = User("sloggo", "I'm a software engineer")
-    post = Post("I'm a software engineer")
-    print(user.posts)
+    post = Post("Fuck palestine")
+    post.initial_impressions()
+    print(post.sentiment)
 
 if __name__ == "__main__":
     main() 
