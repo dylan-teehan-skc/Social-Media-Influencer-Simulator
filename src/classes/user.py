@@ -6,7 +6,6 @@ class User(Subject):
         self.handle = handle
         self.bio = bio
         self.followers = 0
-        self.credibility_score = 0.0
         self.posts = []
 
     def attach(self, observer: Observer):
@@ -43,3 +42,4 @@ class User(Subject):
 
     def update_credibility(self):
         pass
+
