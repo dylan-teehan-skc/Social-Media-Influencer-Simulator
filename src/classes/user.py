@@ -4,7 +4,6 @@ class User:
         self.handle = handle
         self.bio = bio
         self.followers = 0
-        self.credibility_score = 0.0
         self.posts = []
 
     def create_post(self, content):
@@ -25,8 +24,4 @@ class User:
 
     def unfollow(self, user):
         # Implementation for unfollowing a user
-        pass
-
-    def update_credibility(self):
-        # Implementation for updating credibility score
         pass
