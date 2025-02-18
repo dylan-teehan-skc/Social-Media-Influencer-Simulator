@@ -1,5 +1,8 @@
-class User:
+from observer import Observer, Subject  # Importing Observer and Subject
+
+class User(Subject):
     def __init__(self, handle, bio):
+        super().__init__()  # Initialize the Subject class
         # Attributes
         self.handle = handle
         self.bio = bio
