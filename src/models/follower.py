@@ -2,10 +2,12 @@ from typing import List
 from random import randint
 from .post import Post, Sentiment, Comment
 from datetime import datetime
+from ..observer.observer import Observer  
 
-class Follower:
-    def __init__(self, sentiment: Sentiment):
-        self.political_lean = 50  # Start at neutral position
+class Follower(Observer):  
+    def __init__(self, sentiment: Sentiment, handle: str):
+        self.handle = handle  
+        self.political_lean = 50  
         
         # Initial sentiment adjustment
         initial_sentiment = sentiment 
@@ -33,6 +35,11 @@ class Follower:
             "I see it differently.",
             "Let's agree to disagree."
         ]
+
+    def update(self, subject, post=None):
+        if post:
+            print(f"{subject.handle} just posted a new post!")
+            self.interact_with_post(post) 
 
     def _get_comment(self, alignment: float) -> str:
         if alignment > 70:
