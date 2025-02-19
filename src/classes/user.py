@@ -1,4 +1,5 @@
 from src.classes.observer import Subject, Observer
+from src.classes.post import Post
 
 class User(Subject):
     def __init__(self, handle, bio):
@@ -23,7 +24,7 @@ class User(Subject):
             observer.update(self, post)
 
     def create_post(self, content):
-        pass
+        self.notify(new_post)  
 
     def edit_post(self, post):
         pass
