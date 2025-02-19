@@ -38,7 +38,7 @@ class Follower(Observer):
 
     def update(self, subject, post=None):
         if post:
-            print(f"{self.handle} received a new post from {subject.handle}: {post.content}")
+            print(f"{subject.handle} just posted a new post!")
             self.interact_with_post(post) 
 
     def _get_comment(self, alignment: float) -> str:
