@@ -21,7 +21,7 @@ def main():
     
     # Your application code here
     user = User("sloggo", "I'm a software engineer")
-    post = Post("Fuck palestine")
+    post = Post("I support palestine")
     post.initial_impressions()
     print(post.sentiment)
 
