@@ -1,8 +1,8 @@
 from lib_config.config_loader import ConfigLoader
 from lib_utils.logger import setup_logger
 from src.services.logger_service import LoggerService
-from src.classes.user import User
-from src.classes.post import Post
+from src.models.user import User
+from src.models.post import Post
 import logging
 
 def main():
@@ -21,8 +21,9 @@ def main():
     
     # Your application code here
     user = User("sloggo", "I'm a software engineer")
-    post = Post("I'm a software engineer")
-    print(user.posts)
+    post = Post("I support palestine")
+    post.initial_impressions()
+    print(post.sentiment)
 
 if __name__ == "__main__":
     main() 
