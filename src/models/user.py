@@ -1,4 +1,6 @@
 from src.observer.observer import Subject, Observer
+from src.models.post import Post
+from src.builders.text_post_builder import TextPostBuilder
 
 class User(Subject):
     def __init__(self, handle, bio):
@@ -22,8 +24,18 @@ class User(Subject):
         for observer in self._observers:
             observer.update(self, post)
 
-    def create_post(self, content):
-        pass
+    def create_post(self, content: str) -> Post:
+        # Use the TextPostBuilder to create the post
+        post_builder = TextPostBuilder()
+        post = post_builder\
+            .set_content(content)\
+            .set_author(self)\
+            .build()
+            
+        post.initial_impressions()  # Analyze sentiment
+        self.posts.append(post)
+        self.notify(post)  # Notify followers about the new post
+        return post
 
     def edit_post(self, post):
         pass

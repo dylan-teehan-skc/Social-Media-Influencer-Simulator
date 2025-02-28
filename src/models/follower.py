@@ -7,11 +7,17 @@ from ..observer.observer import Observer
 class Follower(Observer):  
     def __init__(self, sentiment: Sentiment, handle: str):
         self.handle = handle  
-        self.political_lean = 50  
         
-        # Initial sentiment adjustment
-        initial_sentiment = sentiment 
-        self._adjust_lean_from_sentiment(initial_sentiment)
+        # Set initial political lean based on sentiment
+        if sentiment == Sentiment.LEFT:
+            self.political_lean = randint(0, 30)  # Left-leaning: 0-30
+        elif sentiment == Sentiment.RIGHT:
+            self.political_lean = randint(70, 100)  # Right-leaning: 70-100
+        else:
+            self.political_lean = randint(40, 60)  # Neutral: 40-60
+        
+        self.sentiment = sentiment  # Store the follower's sentiment
+        
         self.positive_comments = [
             "Couldn't agree more!",
             "This is exactly what I've been saying!",
@@ -38,8 +44,24 @@ class Follower(Observer):
 
     def update(self, subject, post=None):
         if post:
-            print(f"{subject.handle} just posted a new post!")
-            self.interact_with_post(post) 
+            self.interact_with_post(post)
+            
+            # Chance to unfollow if strongly disagree with post
+            if self._should_unfollow(post):
+                subject.detach(self)
+                post.add_comment(Comment("I can't support this content. Unfollowing.", self.sentiment, self.handle))
+                post.add_follower_lost()  # Track lost follower
+
+    def _should_unfollow(self, post: Post) -> bool:
+        if post.sentiment == Sentiment.LEFT:
+            alignment = 100 - self.political_lean
+        elif post.sentiment == Sentiment.RIGHT:
+            alignment = self.political_lean
+        else:
+            return False  # Don't unfollow for neutral posts
+            
+        # Higher chance to unfollow if strongly opposed to the post's sentiment
+        return alignment < 20 and randint(1, 100) <= 30  # 30% chance if alignment < 20
 
     def _get_comment(self, alignment: float) -> str:
         if alignment > 70:
@@ -69,7 +91,7 @@ class Follower(Observer):
 
         if randint(1, 100) <= 30:
             comment = self._get_comment(alignment)
-            post.add_comment(Comment(comment, post.sentiment, self.handle))
+            post.add_comment(Comment(comment, self.sentiment, self.handle))
 
         if alignment > 70:
             post.like(self)
