@@ -1,7 +1,7 @@
 from lib_config.config_loader import ConfigLoader
 from lib_utils.logger import setup_logger
 from src.services.logger_service import LoggerService
-from src.game.game_manager import GameManager
+from frontend.ui_logic import UILogic
 import logging
 
 def main():
@@ -19,7 +19,7 @@ def main():
     logger.setLevel(logging.DEBUG)
     
     # Create and run game
-    game = GameManager()
+    game = UILogic()
     game.run()
 
 if __name__ == "__main__":
