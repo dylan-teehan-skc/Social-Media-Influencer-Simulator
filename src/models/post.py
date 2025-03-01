@@ -1,14 +1,30 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 from enum import Enum
 from dotenv import load_dotenv
 import os
-from google import genai
+import random
+
+if TYPE_CHECKING:
+    from src.models.user import User
+
+try:
+    from google import genai
+    GOOGLE_AI_AVAILABLE = True
+except ImportError:
+    GOOGLE_AI_AVAILABLE = False
 
 class Sentiment(Enum):
     LEFT = "left"
     RIGHT = "right"
     NEUTRAL = "neutral"
+
+class Comment:
+    def __init__(self, content: str, sentiment: Sentiment, authorhandle: str):
+        self.content: str = content
+        self.sentiment: Sentiment = sentiment
+        self.timestamp: datetime = datetime.now()
+        self.author: str = authorhandle
 
 class Post:
     def __init__(self, content: str):
@@ -18,42 +34,64 @@ class Post:
         self.shares: int = 0
         self.sentiment: Sentiment = Sentiment.NEUTRAL
         self.comments: List[Comment] = []
+        self.author: Optional['User'] = None
+        # Track follower impact
+        self.followers_gained: int = 0
+        self.followers_lost: int = 0
     
     def initial_impressions(self) -> None:
-        # TODO: Implement initial impressions
-        # analyse post content and set sentiment
-        # user reactions will depend on sentiment
         try:
-            # Placeholder for AI analysis - replace with actual AI implementation
-            ai_result = self._analyze_content(self.content)
+            if not GOOGLE_AI_AVAILABLE:
+                raise ImportError("Google AI package not available")
+                
+            # Load environment variables from .env file
+            load_dotenv()
+            API_KEY = os.getenv("GOOGLE_API_KEY")
             
-            # Convert AI result to Sentiment enum
-            if ai_result == "left":
+            if not API_KEY:
+                raise ValueError("GOOGLE_API_KEY not found in environment variables")
+            
+            # Try to use Google AI for sentiment analysis
+            sentiment = self._analyze_content(self.content)
+            
+            # Convert result to Sentiment enum
+            if sentiment == "left":
                 self.sentiment = Sentiment.LEFT
-            elif ai_result == "right":
+            elif sentiment == "right":
                 self.sentiment = Sentiment.RIGHT
             else:
                 self.sentiment = Sentiment.NEUTRAL
                 
         except Exception as e:
-            # If analysis fails, default to neutral
-            self.sentiment = Sentiment.NEUTRAL
-            print(f"Error analyzing content: {str(e)}")
+            print(f"Using fallback sentiment analysis: {str(e)}")
+            # Simple fallback: randomly assign sentiment for demo purposes
+            self.sentiment = random.choice([Sentiment.LEFT, Sentiment.RIGHT, Sentiment.NEUTRAL])
 
-    def like(self) -> None:
+    def like(self, follower=None) -> None:
         self.likes += 1
         
-    def unlike(self) -> None:
+    def unlike(self, follower=None) -> None:
         self.likes -= 1
 
-    def share(self) -> None:
+    def share(self, follower=None) -> None:
         self.shares += 1
 
-    def unshare(self) -> None:
+    def unshare(self, follower=None) -> None:
         self.shares -= 1
+        
+    def add_comment(self, comment: Comment) -> None:
+        self.comments.append(comment)
+
+    def add_follower_gained(self):
+        self.followers_gained += 1
+        
+    def add_follower_lost(self):
+        self.followers_lost += 1
 
     def _analyze_content(self, content: str) -> str:
-        load_dotenv()  # Load environment variables from .env file
+        if not GOOGLE_AI_AVAILABLE:
+            raise ImportError("Google AI package not available")
+            
         API_KEY = os.getenv("GOOGLE_API_KEY")
         if not API_KEY:
             raise ValueError("GOOGLE_API_KEY not found in environment variables")
@@ -65,29 +103,17 @@ class Post:
         Text: {content}
         """
 
-        try:
-            client = genai.Client(api_key=API_KEY)
-            response = client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt
-            )
-            
-            sentiment = response.text.strip().lower()
-            
-            # Validate the response
-            if sentiment not in ["left", "right", "neutral"]:
-                print(f"Unexpected API response: {sentiment}, defaulting to neutral")
-                return "neutral"
-                
-            return sentiment
-
-        except Exception as e:
-            print(f"Error calling Google Gemini API: {str(e)}")
+        client = genai.Client(api_key=API_KEY)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt
+        )
+        
+        sentiment = response.text.strip().lower()
+        
+        # Validate the response
+        if sentiment not in ["left", "right", "neutral"]:
+            print(f"Unexpected API response: {sentiment}, defaulting to neutral")
             return "neutral"
-
-class Comment:
-    def __init__(self, content: str, sentiment: Sentiment, authorhandle: str):
-        self.content: str = content
-        self.sentiment: Sentiment = sentiment
-        self.timestamp: datetime = datetime.now()
-        self.author: str = authorhandle
+            
+        return sentiment
