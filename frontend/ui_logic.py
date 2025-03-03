@@ -3,7 +3,11 @@ from .views.main_view import MainView
 from src.game.game_manager import GameManager
 
 class UILogic:
-    def __init__(self):
+    def __init__(self, mediator):
+
+        #mediator
+        self.mediator = mediator
+        self.mediator.set_ui_logic(self)
 
         pygame.init()
         pygame.font.init()
@@ -14,7 +18,7 @@ class UILogic:
 
 
         #game manager instance
-        self.game_manager = GameManager() 
+        self.game_manager = GameManager(self.mediator) 
 
 
     def handle_mouse_wheel(self, event):

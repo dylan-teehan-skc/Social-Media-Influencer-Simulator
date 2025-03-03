@@ -5,10 +5,14 @@ from ..models.post import Sentiment, Comment
 from ..models.follower import Follower
 
 class GameManager:
-    def __init__(self):
+    def __init__(self, mediator):
         
+        #mediator
+        self.mediator = mediator
+        self.mediator.set_game_manager(self)
+
         # Create main user
-        self.user = User("sloggo", "I'm a software engineer")
+        self.user = User("PA", "I'm a stud")
         
         # Create initial followers
         self.create_initial_followers()
@@ -44,7 +48,8 @@ class GameManager:
         
     def handle_post_creation(self, content: str):
         post = self.user.create_post(content)
-        self.view.posts.insert(0, post)
+        view = self.mediator.get_view()
+        view.posts.insert(0, post)
         
         # Base chances affected by reputation
         reputation_penalty = min(0.8, self.recent_follower_losses * 0.2)  # Each loss reduces chances by 20%, up to 80%
