@@ -1,4 +1,4 @@
-from src.observer.observer import Subject, Observer
+from interfaces.observer import Subject, Observer
 from src.models.post import Post
 from src.builders.text_post_builder import TextPostBuilder
 
