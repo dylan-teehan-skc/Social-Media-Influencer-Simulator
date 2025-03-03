@@ -2,7 +2,7 @@ from typing import List
 from random import randint
 from .post import Post, Sentiment, Comment
 from datetime import datetime
-from ..observer.observer import Observer  
+from ..interfaces.observer import Observer  
 
 class Follower(Observer):  
     def __init__(self, sentiment: Sentiment, handle: str):
