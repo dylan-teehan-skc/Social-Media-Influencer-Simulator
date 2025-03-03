@@ -28,10 +28,10 @@ class Post:
         self.height = self.calculate_height()
         
     def calculate_height(self):
-        # Base height for padding and fixed elements
-        height = 140  # Increased to accommodate new stats
+
+        height = 140  # Height of the post
         
-        # Add height for wrapped text
+        # Add height for the wrapped text
         content_width = self.width - (self.padding * 2)
         words = self.post.content.split()
         line = ""
@@ -64,9 +64,9 @@ class Post:
         time_text = self.fonts['small'].render(self.post.timestamp.strftime('%I:%M %p'), True, colors.TEXT_SECONDARY)
         screen.blit(time_text, (x + self.padding + author_text.get_width() + 10, current_y))
         
-        # Sentiment indicator
+        # Sentiment indicator (Left, Right, Neutral)
         sentiment_color = {
-            'LEFT': colors.PRIMARY,  # Twitter Blue for left
+            'LEFT': colors.PRIMARY,  # Blue for left
             'RIGHT': colors.LIKE_RED,  # Red for right
             'NEUTRAL': colors.TEXT_SECONDARY  # Gray for neutral
         }[self.post.sentiment.name]
@@ -75,7 +75,7 @@ class Post:
         
         current_y += 30
         
-        # Content with text wrapping
+        # Adds text wrapping to the content
         content_width = self.width - (self.padding * 2)
         words = self.post.content.split()
         line = ""
@@ -93,7 +93,7 @@ class Post:
             text_surface = self.fonts['normal'].render(line, True, colors.TEXT_PRIMARY)
             screen.blit(text_surface, (x + self.padding, current_y))
             
-        # Follower impact stats
+        # Stats for followers gained and lost
         current_y = y + self.height - 60
         follower_stats = self.fonts['small'].render(
             f"Followers: +{self.post.followers_gained} -{self.post.followers_lost}", 

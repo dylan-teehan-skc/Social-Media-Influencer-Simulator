@@ -9,17 +9,17 @@ class MainView:
         self.screen = pygame.display.set_mode((screen_width, screen_height))
         pygame.display.set_caption("Twitter-like Social Media")
         
-        # Initialize posts list
+        # List of posts
         self.posts = []
         
-        # Fonts
+        # List of fonts
         self.fonts = {
             'title': pygame.font.SysFont('Arial', 24, bold=True),
             'normal': pygame.font.SysFont('Arial', 16),
             'small': pygame.font.SysFont('Arial', 14)
         }
         
-        # UI State
+        # UI State variables
         self.scroll_y = 0
         self.composing = False
         self.compose_text = ""
@@ -27,13 +27,13 @@ class MainView:
         self.current_post = None
         self.comments_scroll_y = 0
         
-        # Layout
+        # Screen layout variables
         self.sidebar_width = 300
         self.content_padding = 20
         self.post_width = screen_width - self.sidebar_width - (self.content_padding * 2)
         
     def draw_sidebar(self, user):
-        # Sidebar background
+        # Sidebar background 
         sidebar_rect = pygame.Rect(0, 0, self.sidebar_width, self.height)
         pygame.draw.rect(self.screen, colors.BG_SECONDARY, sidebar_rect)
         pygame.draw.line(self.screen, colors.BORDER_COLOR, 
@@ -51,7 +51,7 @@ class MainView:
         followers_text = self.fonts['normal'].render(f"Followers: {user.followers}", True, colors.TEXT_SECONDARY)
         self.screen.blit(followers_text, (20, profile_y + 70))
         
-        # New post button
+        # Post button
         self.compose_button = Button(
             20, profile_y + 120, 
             self.sidebar_width - 40, 50, 
@@ -152,10 +152,10 @@ class MainView:
         return post_rects
         
     def draw(self, user, posts):
-        # Fill background
+        # Fill the background
         self.screen.fill(colors.BG_MAIN)
         
-        # Draw sidebar
+        # Draw the sidebar
         self.draw_sidebar(user)
         
         if self.viewing_comments:
@@ -165,6 +165,6 @@ class MainView:
             tweet_button = self.draw_compose_modal()
             return [], tweet_button
         else:
-            # Draw main feed
+            # Draw the main feed
             post_rects = self.draw_feed(posts)
             return post_rects, self.compose_button.rect 

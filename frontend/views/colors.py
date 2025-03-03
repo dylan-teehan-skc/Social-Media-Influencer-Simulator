@@ -1,13 +1,13 @@
 """Twitter-like color scheme"""
 
 # Main colors
-PRIMARY = (29, 155, 240)  # Twitter Blue
+PRIMARY = (29, 155, 240)  # Blue (Twitter Blue)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
 # Background colors
 BG_MAIN = (0, 0, 0)  # Dark mode background
-BG_SECONDARY = (22, 24, 28)  # Slightly lighter than main bg
+BG_SECONDARY = (22, 24, 28)  # Slightly lighter than main background
 BG_HOVER = (39, 44, 48)  # Hover state
 
 # Text colors

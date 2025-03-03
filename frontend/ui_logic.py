@@ -5,42 +5,42 @@ from src.game.game_manager import GameManager
 class UILogic:
     def __init__(self, mediator):
 
-        #mediator
+        #creates an instance of the mediator
         self.mediator = mediator
         self.mediator.set_ui_logic(self)
 
         pygame.init()
         pygame.font.init()
         
-        #ui creation
+        #creates an instance of the main view
         self.view = MainView(1200, 800)
         self.clock = pygame.time.Clock()
 
 
-        #game manager instance
+        #instance of the game manager
         self.game_manager = GameManager(self.mediator) 
 
 
     def handle_mouse_wheel(self, event):
-            scroll_amount = 40  # Increased from 20 for smoother scrolling
+            scroll_amount = 40  # Scrolling speed
             
             if self.view.viewing_comments:
                 # Scroll up (button 4) should show more content above (negative scroll)
                 # Scroll down (button 5) should show more content below (positive scroll)
-                if event.button == 4:  # Scroll up
+                if event.button == 4:  # Scroll up button
                     self.view.comments_scroll_y = min(0, self.view.comments_scroll_y + scroll_amount)
-                else:  # Scroll down
+                else:  # Scrolls down
+
                     # Don't allow scrolling past the last comment
-                    if len(self.view.current_post.comments) * 100 > 800:  # If comments exceed view height
+                    if len(self.view.current_post.comments) * 100 > 800:  # If comments exceed the view height
                         max_scroll = -(len(self.view.current_post.comments) * 100 - 700)  # Leave some space at bottom
                         self.view.comments_scroll_y = max(max_scroll, self.view.comments_scroll_y - scroll_amount)
             else:
-                # Same logic for main feed
-                if event.button == 4:  # Scroll up
+                if event.button == 4:  # Scroll up button
                     self.view.scroll_y = min(0, self.view.scroll_y + scroll_amount)
                 else:  # Scroll down
-                    if len(self.view.posts) * 200 > 800:  # If posts exceed view height
-                        max_scroll = -(len(self.view.posts) * 200 - 700)  # Leave some space at bottom
+                    if len(self.view.posts) * 200 > 800:  # If posts exceeds view height
+                        max_scroll = -(len(self.view.posts) * 200 - 700)  # Leave space at the bottom
                         self.view.scroll_y = max(max_scroll, self.view.scroll_y - scroll_amount)
                 
     def handle_mouse_click(self, pos):

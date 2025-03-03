@@ -6,24 +6,26 @@ from src.mediator.mediator import Mediator
 from frontend.ui_logic import UILogic
 
 def main():
-    # Load configuration
+    # Load the configuration settings for the application
     config = ConfigLoader()
     
-    # Setup logger with full logging config
+    # Sets up the logger with full logging configuration to capture events
     logger = setup_logger(
         name=config.get('app.name'),
         config=config.get('logging')
     )
     
-    # Set the logger in the service and configure debug level
+    # This sets the logger in the service and configures the debug level for detailed logging messages
     LoggerService.set_logger(logger)
     logger.setLevel(logging.DEBUG)
 
+    # Initializes the mediator to handle communication between all components
     mediator = Mediator()
 
+    # Creates the UI logic instance, which is responsible for handling user interactions
     ui_logic = UILogic(mediator)
     
-    # Create and run game
+    # This starts the application by running UI logic
     ui_logic.run()
 
 if __name__ == "__main__":
