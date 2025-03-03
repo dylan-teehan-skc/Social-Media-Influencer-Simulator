@@ -11,7 +11,7 @@ class GameManager:
     MAX_POTENTIAL_FOLLOWERS = 15
     NEW_FOLLOWERS_BATCH_SIZE = 5
     BASE_NEUTRAL_CHANCE = 40
-    BASE_PARTISAN_CHANCE = 60
+    HOT_TAKE_CHANCE = 60 
     MAX_REPUTATION_PENALTY = 0.8
     REPUTATION_PENALTY_PER_LOSS = 0.2
     MAX_FOLLOWER_MULTIPLIER = 4.0
@@ -59,7 +59,7 @@ class GameManager:
         reputation_penalty = min(self.MAX_REPUTATION_PENALTY, 
                                self.recent_follower_losses * self.REPUTATION_PENALTY_PER_LOSS)
         base_chance = (self.BASE_NEUTRAL_CHANCE if post_sentiment == Sentiment.NEUTRAL 
-                      else self.BASE_PARTISAN_CHANCE) * (1 - reputation_penalty)
+                      else self.HOT_TAKE_CHANCE) * (1 - reputation_penalty)
         follower_multiplier = min(self.MAX_FOLLOWER_MULTIPLIER, 
                                 1.0 + (self.user.followers / self.FOLLOWER_MULTIPLIER_SCALE))
         return int(base_chance * follower_multiplier)
