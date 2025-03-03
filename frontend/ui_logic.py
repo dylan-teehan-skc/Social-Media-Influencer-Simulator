@@ -115,21 +115,33 @@ class UILogic:
         text_rect = text_surface.get_rect(center=(600, 400))  # Center the text
 
         # Create a pop-up background
-        popup_surface = pygame.Surface((400, 200))  # Size of the pop-up
+        popup_width, popup_height = 400, 200
+        popup_surface = pygame.Surface((popup_width, popup_height))  # Size of the pop-up
         popup_surface.fill((0, 0, 0))  # Black background
         popup_surface.set_alpha(200)  # Set transparency
+
+        # Draw the border
+        border_thickness = 5
+        pygame.draw.rect(self.view.screen, (255, 255, 255), (400 - border_thickness, 300 - border_thickness, popup_width + 2 * border_thickness, popup_height + 2 * border_thickness))  # White border
 
         # Display the pop-up
         self.view.screen.blit(popup_surface, (400, 300))  # Position the pop-up
         self.view.screen.blit(text_surface, text_rect)  # Draw the text
 
+        # Draw the "X" button
+        x_button_rect = pygame.Rect(550, 310, 30, 30)  # Position and size of the "X" button
+        pygame.draw.rect(self.view.screen, (255, 0, 0), x_button_rect)  # Red "X" button
+        x_font = pygame.font.Font(None, 36)
+        x_surface = x_font.render("X", True, (255, 255, 255))  # White "X"
+        self.view.screen.blit(x_surface, (x_button_rect.x + 5, x_button_rect.y))  # Center the "X" in the button
+
         # Update the display
         pygame.display.flip()
 
         # Wait for user to close the pop-up
-        self.wait_for_close()
+        self.wait_for_close(x_button_rect)
 
-    def wait_for_close(self):
+    def wait_for_close(self, x_button_rect):
         waiting = True
         while waiting:
             for event in pygame.event.get():
@@ -137,4 +149,10 @@ class UILogic:
                     pygame.quit()
                     exit()
                 if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                    waiting = False  # Close the pop-up on any key press or mouse click 
+                    # Check if the "X" button was clicked
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_pos = pygame.mouse.get_pos()
+                        if x_button_rect.collidepoint(mouse_pos):
+                            waiting = False  # Close the pop-up on "X" button click
+                    else:
+                        waiting = False  # Close the pop-up on any key press 
