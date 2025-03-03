@@ -107,3 +107,34 @@ class UILogic:
             self.clock.tick(60)
             
         pygame.quit() 
+
+    def show_notification(self, message: str):
+        # Create a pop-up surface
+        font = pygame.font.Font(None, 36)  # Use default font and size
+        text_surface = font.render(message, True, (255, 255, 255))  # White text
+        text_rect = text_surface.get_rect(center=(600, 400))  # Center the text
+
+        # Create a pop-up background
+        popup_surface = pygame.Surface((400, 200))  # Size of the pop-up
+        popup_surface.fill((0, 0, 0))  # Black background
+        popup_surface.set_alpha(200)  # Set transparency
+
+        # Display the pop-up
+        self.view.screen.blit(popup_surface, (400, 300))  # Position the pop-up
+        self.view.screen.blit(text_surface, text_rect)  # Draw the text
+
+        # Update the display
+        pygame.display.flip()
+
+        # Wait for user to close the pop-up
+        self.wait_for_close()
+
+    def wait_for_close(self):
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                    waiting = False  # Close the pop-up on any key press or mouse click 

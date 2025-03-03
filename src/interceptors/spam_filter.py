@@ -3,5 +3,10 @@ from src.models.post import Post
 
 class SpamFilter(ContentInterceptor):
     def intercept(self, post: Post) -> None:
-        pass
-        #Todo: Implement spam filter
+        spam_keywords = ["buy now", "free", "click here", "limited time offer"]
+        if any(keyword in post.content.lower() for keyword in spam_keywords):
+            print("Post rejected: Content is considered spam.")
+            post.is_spam = True  # Assuming Post has an is_spam attribute
+        else:
+            print("Post accepted: Content is not spam.")
+            post.is_spam = False  # Mark as not spam

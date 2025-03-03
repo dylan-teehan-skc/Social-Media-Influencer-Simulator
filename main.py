@@ -20,7 +20,6 @@ def main():
     logger.setLevel(logging.DEBUG)
 
     mediator = Mediator()
-
     ui_logic = UILogic(mediator)
     
     # Create and run game

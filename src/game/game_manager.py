@@ -1,8 +1,10 @@
 import pygame
 from random import randint
 from ..models.user import User
-from ..models.post import Sentiment, Comment
+from ..models.post import Sentiment, Comment, Post
 from ..models.follower import Follower
+from src.interceptors.dispatcher import Dispatcher
+from src.interceptors.spam_filter import SpamFilter
 
 class GameManager:
     def __init__(self, mediator):
@@ -26,6 +28,9 @@ class GameManager:
         self.recent_follower_losses = 0
         self.last_reputation_check = pygame.time.get_ticks()
         self.reputation_recovery_delay = 30000  # 30 seconds to start recovering reputation
+        
+        self.dispatcher = Dispatcher()  # Create a dispatcher instance
+        self.dispatcher.add_interceptor(SpamFilter())  # Add the spam filter interceptor
                 
     def create_initial_followers(self):
         followers = [
@@ -47,9 +52,16 @@ class GameManager:
         return Follower(sentiment, f"{prefix}{randint(1000, 9999)}")
         
     def handle_post_creation(self, content: str):
-        post = self.user.create_post(content)
-        view = self.mediator.get_view()
-        view.posts.insert(0, post)
+        post = self.user.create_post(content)# Create a new post instance
+        self.dispatcher.process_post(post)  # Process the post through the dispatcher
+
+        if post.is_spam:
+            self.mediator.get_ui_logic().show_notification("Post rejected: content is considered spam.")  # Check if the post was marked as spam
+            return
+        else: 
+            view = self.mediator.get_view()
+            view.posts.insert(0, post)    # Stop the posting process if it's spam
+
         
         # Base chances affected by reputation
         reputation_penalty = min(0.8, self.recent_follower_losses * 0.2)  # Each loss reduces chances by 20%, up to 80%
