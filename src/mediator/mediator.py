@@ -18,6 +18,8 @@ class Mediator:
             # Handle events from UILogic
             self.game_manager.handle_event(event)
 
-    
     def get_view(self):
         return self.ui_logic.view 
+    
+    def get_ui_logic(self):
+        return self.ui_logic 
