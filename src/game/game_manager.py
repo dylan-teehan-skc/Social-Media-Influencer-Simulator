@@ -93,7 +93,7 @@ class GameManager:
             return
         else: 
             view = self.mediator.get_view()
-            view.posts.insert(0, post)    # Stop the posting process if it's spam
+            view.posts.insert(0, post)    
 
         
         initial_followers = self.user.followers
