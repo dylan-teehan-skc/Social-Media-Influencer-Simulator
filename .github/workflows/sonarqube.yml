@@ -1,0 +1,47 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov sonar-python
+
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=src tests/ --cov-report=xml
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=social-media-influencer-simulator
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.coverage.exclusions=tests/**,**/__init__.py
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.python.version=3.10
+            -Dsonar.python.pylint.reportPaths=pylint-report.txt
+            -Dsonar.python.pytest.reportPaths=pytest-report.xml
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.conditions=coverage:80,duplicated_lines_density:3,maintainability_rating:1,reliability_rating:1,security_rating:1 
