@@ -56,3 +56,4 @@ jobs:
             -Dsonar.qualitygate.wait=true
             -Dsonar.cpd.exclusions=tests/**
             -Dsonar.python.flake8.reportPaths=flake8-report.txt 
+            
