@@ -4,6 +4,7 @@ from enum import Enum
 from dotenv import load_dotenv
 import os
 import random
+from src.services.logger_service import LoggerService
 
 if TYPE_CHECKING:
     from src.models.user import User
@@ -40,6 +41,9 @@ class Post:
         # Track follower impact
         self.followers_gained: int = 0
         self.followers_lost: int = 0
+        self.logger = LoggerService.get_logger()
+        
+        self.logger.debug(f"Post initialized with content: {content[:50]}..." if len(content) > 50 else content)
 
     def __new__(cls, *args, **kwargs):
         raise RuntimeError("Posts can only be created through PostBuilderFactory")
@@ -74,31 +78,47 @@ class Post:
             else:
                 self.sentiment = Sentiment.NEUTRAL
                 
+            self.logger.info(f"Post sentiment analyzed as {self.sentiment.name}")
+                
         except Exception as e:
-            print(f"Using fallback sentiment analysis: {str(e)}")
+            self.logger.warning(f"Using fallback sentiment analysis: {str(e)}")
             # Simple fallback: randomly assign sentiment for demo purposes
             self.sentiment = random.choice([Sentiment.LEFT, Sentiment.RIGHT, Sentiment.NEUTRAL])
+            self.logger.info(f"Post sentiment randomly assigned as {self.sentiment.name}")
 
     def like(self, follower=None) -> None:
         self.likes += 1
+        self.logger.debug(f"Post liked, total likes: {self.likes}")
         
     def unlike(self, follower=None) -> None:
-        self.likes -= 1
+        if self.likes > 0:
+            self.likes -= 1
+            self.logger.debug(f"Post unliked, total likes: {self.likes}")
+        else:
+            self.logger.warning("Attempted to unlike a post with 0 likes")
 
     def share(self, follower=None) -> None:
         self.shares += 1
+        self.logger.debug(f"Post shared, total shares: {self.shares}")
 
     def unshare(self, follower=None) -> None:
-        self.shares -= 1
+        if self.shares > 0:
+            self.shares -= 1
+            self.logger.debug(f"Post unshared, total shares: {self.shares}")
+        else:
+            self.logger.warning("Attempted to unshare a post with 0 shares")
         
     def add_comment(self, comment: Comment) -> None:
         self.comments.append(comment)
+        self.logger.debug(f"Comment added by {comment.author}: {comment.content[:30]}..." if len(comment.content) > 30 else comment.content)
 
     def add_follower_gained(self):
         self.followers_gained += 1
+        self.logger.debug(f"Follower gained, total gained: {self.followers_gained}")
         
     def add_follower_lost(self):
         self.followers_lost += 1
+        self.logger.debug(f"Follower lost, total lost: {self.followers_lost}")
 
     def _analyze_content(self, content: str) -> str:
         if not GOOGLE_AI_AVAILABLE:
@@ -115,6 +135,7 @@ class Post:
         Text: {content}
         """
 
+        self.logger.debug("Sending content to Google AI for sentiment analysis")
         client = genai.Client(api_key=API_KEY)
         response = client.models.generate_content(
             model="gemini-2.0-flash",
@@ -125,7 +146,7 @@ class Post:
         
         # Validate the response
         if sentiment not in ["left", "right", "neutral"]:
-            print(f"Unexpected API response: {sentiment}, defaulting to neutral")
+            self.logger.warning(f"Unexpected API response: {sentiment}, defaulting to neutral")
             return "neutral"
             
         return sentiment
