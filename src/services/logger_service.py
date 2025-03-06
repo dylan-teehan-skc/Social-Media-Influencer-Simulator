@@ -12,7 +12,7 @@ class LoggerService:
     @classmethod
     def get_logger(cls):
         if cls._logger is None:
-            cls._logger = logging.getLogger('default')
+            cls._logger = logging.getLogger('Social Media Application')
         return cls._logger
 
     @classmethod

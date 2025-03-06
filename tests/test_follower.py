@@ -1,8 +1,11 @@
 import unittest
 from src.models.follower import Follower
 from src.models.post import Post, Sentiment, Comment
+from src.factory.post_builder_factory import PostBuilderFactory
 
 class TestFollower(unittest.TestCase):
+    def setUp(self):
+        self.post_builder = PostBuilderFactory.get_builder("text")
 
     def test_initial_sentiment_adjustment_left(self):
         follower = Follower(Sentiment.LEFT, handle="follower1")
@@ -18,7 +21,7 @@ class TestFollower(unittest.TestCase):
         
     def test_interact_with_aligned_post(self):
         follower = Follower(Sentiment.LEFT, handle="leftie")
-        post = Post("Left-leaning content")
+        post = self.post_builder.set_content("Left-leaning content").build()
         post.sentiment = Sentiment.LEFT
         
         follower.interact_with_post(post)
@@ -27,7 +30,7 @@ class TestFollower(unittest.TestCase):
         
     def test_interact_with_opposed_post(self):
         follower = Follower(Sentiment.LEFT, handle="leftie")
-        post = Post("Right-leaning content")
+        post = self.post_builder.set_content("Right-leaning content").build()
         post.sentiment = Sentiment.RIGHT
         
         follower.interact_with_post(post)
@@ -37,7 +40,7 @@ class TestFollower(unittest.TestCase):
     def test_should_unfollow_opposed_content(self):
         follower = Follower(Sentiment.LEFT, handle="leftie")
         follower.political_lean = 10  # Strongly left
-        post = Post("Right-leaning content")
+        post = self.post_builder.set_content("Right-leaning content").build()
         post.sentiment = Sentiment.RIGHT
         
         # Run multiple times to account for randomness

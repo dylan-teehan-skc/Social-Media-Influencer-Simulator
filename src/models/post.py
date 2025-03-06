@@ -29,16 +29,28 @@ class Comment:
 class Post:
     def __init__(self, content: str):
         self.content: str = content
-        self.timestamp: datetime = datetime.now()
+        self.author = None
+        self.image_path = None
+        self.sentiment = None
+        self.comments = []
+        self.is_spam = False
+        self.timestamp = datetime.now()
         self.likes: int = 0
         self.shares: int = 0
-        self.sentiment: Sentiment = Sentiment.NEUTRAL
-        self.comments: List[Comment] = []
-        self.author: Optional['User'] = None
         # Track follower impact
         self.followers_gained: int = 0
         self.followers_lost: int = 0
-    
+
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("Posts can only be created through PostBuilderFactory")
+
+    @classmethod
+    def _create(cls, content: str) -> 'Post':
+        """Private constructor - posts should only be created through PostBuilderFactory"""
+        instance = super().__new__(cls)
+        instance.__init__(content)
+        return instance
+
     def initial_impressions(self) -> None:
         try:
             if not GOOGLE_AI_AVAILABLE:

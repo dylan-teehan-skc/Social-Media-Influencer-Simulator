@@ -1,6 +1,7 @@
 from src.interfaces.observer import Subject, Observer
 from src.models.post import Post
-from src.builders.text_post_builder import TextPostBuilder
+from src.factory.post_builder_factory import PostBuilderFactory
+from src.services.logger_service import LoggerService
 
 class User(Subject):
     def __init__(self, handle, bio):
@@ -9,6 +10,7 @@ class User(Subject):
         self.bio = bio
         self.followers = 0
         self.posts = []
+        self.logger = LoggerService.get_logger()
 
     def attach(self, observer: Observer):
         if observer not in self._observers:
@@ -24,17 +26,28 @@ class User(Subject):
         for observer in self._observers:
             observer.update(self, post)
 
-    def create_post(self, content: str) -> Post:
-        # Use the TextPostBuilder to create the post
-        post_builder = TextPostBuilder()
+    def create_post(self, content: str, image_path: str = None) -> Post:
+        # Get the appropriate builder from the factory
+        post_type = "image" if image_path else "text"
+        post_builder = PostBuilderFactory.get_builder(post_type)
+        
+        # Build the post using the builder
         post = post_builder\
             .set_content(content)\
-            .set_author(self)\
-            .build()
+            .set_author(self)
             
+        # Set image if provided
+        if image_path:
+            post = post.set_image(image_path)
+            
+        # Build and finalize the post
+        post = post.build()
         post.initial_impressions()  # Analyze sentiment
+        
+        # Add to posts list and notify observers
         self.posts.append(post)
-        self.notify(post)  # Notify followers about the new post
+        self.notify(post)
+        
         return post
 
     def edit_post(self, post):
