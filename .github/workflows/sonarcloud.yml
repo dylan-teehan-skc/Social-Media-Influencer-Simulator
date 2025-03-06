@@ -53,6 +53,8 @@ jobs:
             -Dsonar.verbose=true
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.scm.provider=git
+            -Dsonar.analysis.mode=preview
+            -Dsonar.issuesReport.exportLocation=sonar-report.json
             -Dsonar.qualitygate.wait=true
             -Dsonar.python.bandit.reportPaths=bandit-report.json
             -Dsonar.cpd.exclusions=tests/**
