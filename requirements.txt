@@ -1,5 +1,11 @@
 pytest
 python-dotenv>=1.0.0
 google-generativeai>=0.3.0
+google-api-core>=2.15.0
 pygame>=2.5.0
 pillow
+
+# Linting tools
+pylint>=3.0.0
+autopep8>=2.0.0
+isort>=5.13.0

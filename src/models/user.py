@@ -1,11 +1,12 @@
-from src.interfaces.observer import Subject, Observer
-from src.models.post import Post
 from src.factory.post_builder_factory import PostBuilderFactory
+from src.interfaces.observer import Observer, Subject
+from src.models.post import Post
 from src.services.logger_service import LoggerService
+
 
 class User(Subject):
     def __init__(self, handle, bio):
-        super().__init__()  
+        super().__init__()
         self.handle = handle
         self.bio = bio
         self.followers = 0
@@ -30,24 +31,24 @@ class User(Subject):
         # Get the appropriate builder from the factory
         post_type = "image" if image_path else "text"
         post_builder = PostBuilderFactory.get_builder(post_type)
-        
+
         # Build the post using the builder
         post = post_builder\
             .set_content(content)\
             .set_author(self)
-            
+
         # Set image if provided
         if image_path:
             post = post.set_image(image_path)
-            
+
         # Build and finalize the post
         post = post.build()
         post.initial_impressions()  # Analyze sentiment
-        
+
         # Add to posts list and notify observers
         self.posts.append(post)
         self.notify(post)
-        
+
         return post
 
     def edit_post(self, post):
