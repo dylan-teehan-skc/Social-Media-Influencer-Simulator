@@ -24,6 +24,13 @@ class TestFollower(unittest.TestCase):
         post = self.post_builder.set_content("Left-leaning content").build()
         post.sentiment = Sentiment.LEFT
         
+        # Create a mock author for the post
+        class MockAuthor:
+            def __init__(self, handle):
+                self.handle = handle
+        
+        post.author = MockAuthor("test_author")
+        
         follower.interact_with_post(post)
         self.assertGreater(post.likes, 0, "Aligned followers should like the post")
         self.assertGreater(post.shares, 0, "Aligned followers should share the post")
@@ -32,6 +39,13 @@ class TestFollower(unittest.TestCase):
         follower = Follower(Sentiment.LEFT, handle="leftie")
         post = self.post_builder.set_content("Right-leaning content").build()
         post.sentiment = Sentiment.RIGHT
+        
+        # Create a mock author for the post
+        class MockAuthor:
+            def __init__(self, handle):
+                self.handle = handle
+        
+        post.author = MockAuthor("test_author")
         
         follower.interact_with_post(post)
         self.assertEqual(post.likes, 0, "Opposed followers should not like the post")
