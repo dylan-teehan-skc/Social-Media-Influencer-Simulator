@@ -34,9 +34,7 @@ class CommentCommand(Command):
         if self.comment in self.post.comments:
             self.post.comments.remove(self.comment)
             author_info = f"@{self.post.author.handle}" if self.post.author else "(no author)"
-            self.logger.info(
-                f"Undid: Follower '{
-                    self.comment.author}' commented on post by {author_info}")
+            self.logger.info(f"Undid: Follower '{self.comment.author}' commented on post by {author_info}")
 
 
 class ShareCommand(Command):

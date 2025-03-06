@@ -58,8 +58,7 @@ class Post:
         self.followers_lost: int = 0
         self.logger = LoggerService.get_logger()
 
-        self.logger.debug(f"Post initialized with content: {content[:50]}..." if len(
-            content) > 50 else content)
+        self.logger.debug(f"Post initialized with content: {content[:50]}..." if len(content) > 50 else content)
 
     def __new__(cls, *args, **kwargs):
         raise RuntimeError("Posts can only be created through PostBuilderFactory")
@@ -81,8 +80,7 @@ class Post:
         instance.followers_gained = 0
         instance.followers_lost = 0
         instance.logger = LoggerService.get_logger()
-        instance.logger.debug(f"Post initialized with content: {content[:50]}..." if len(
-            content) > 50 else content)
+        instance.logger.debug(f"Post initialized with content: {content[:50]}..." if len(content) > 50 else content)
         return instance
 
     def initial_impressions(self) -> None:
@@ -145,8 +143,7 @@ class Post:
 
     def add_comment(self, comment: Comment) -> None:
         self.comments.append(comment)
-        self.logger.debug(f"Comment added by {comment.author}: {comment.content[:30]}..." if len(
-            comment.content) > 30 else comment.content)
+        self.logger.debug(f"Comment added by {comment.author}: {comment.content[:30]}..." if len(comment.content) > 30 else comment.content)
 
     def add_follower_gained(self):
         self.followers_gained += 1
