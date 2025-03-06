@@ -112,7 +112,8 @@ class Follower(Observer):
         else:
             alignment = 100 - abs(50 - self.political_lean) * 2
 
-        self.logger.debug(f"Follower {self.handle} has {alignment}% alignment with post by {post.author.handle}")
+        author_info = f"by {post.author.handle}" if post.author else "(no author)"
+        self.logger.debug(f"Follower {self.handle} has {alignment}% alignment with post {author_info}")
 
         # Decide whether to comment (30% chance)
         if randint(1, 100) <= 30:
