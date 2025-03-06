@@ -1,4 +1,4 @@
-name: SonarQube Analysis
+name: SonarCloud Analysis
 
 on:
   push:
@@ -7,7 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  sonarqube:
+  sonarcloud:
+    name: SonarCloud
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -33,14 +34,15 @@ jobs:
         run: |
           python -m pytest --cov=src tests/ --cov-report=xml --junitxml=pytest-report.xml
 
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@master
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # Generate a token on SonarCloud.io
         with:
           args: >
-            -Dsonar.projectKey=social-media-influencer-simulator
+            -Dsonar.organization=dylan-teehan-skc
+            -Dsonar.projectKey=dylan-teehan-skc_Social-Media-Influencer-Simulator
             -Dsonar.sources=src
             -Dsonar.tests=tests
             -Dsonar.coverage.exclusions=tests/**,**/__init__.py
@@ -48,5 +50,10 @@ jobs:
             -Dsonar.python.version=3.10
             -Dsonar.python.pylint.reportPaths=pylint-report.txt
             -Dsonar.python.xunit.reportPath=pytest-report.xml
+            -Dsonar.verbose=true
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.scm.provider=git
             -Dsonar.qualitygate.wait=true
-            -Dsonar.qualitygate.conditions=coverage:80,duplicated_lines_density:3,maintainability_rating:1,reliability_rating:1,security_rating:1 
+            -Dsonar.python.bandit.reportPaths=bandit-report.json
+            -Dsonar.cpd.exclusions=tests/**
+            -Dsonar.python.flake8.reportPaths=flake8-report.txt 
