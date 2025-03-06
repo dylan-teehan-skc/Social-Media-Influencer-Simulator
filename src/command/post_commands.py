@@ -13,7 +13,8 @@ class LikeCommand(Command):
         
     def execute(self) -> None:
         self.post.like()
-        self.logger.info(f"Follower '{self.follower_handle}' liked post by @{self.post.author.handle}")
+        author_info = f"@{self.post.author.handle}" if self.post.author else "(no author)"
+        self.logger.info(f"Follower '{self.follower_handle}' liked post by {author_info}")
 
 
 class CommentCommand(Command):
@@ -26,7 +27,14 @@ class CommentCommand(Command):
         
     def execute(self) -> None:
         self.post.add_comment(self.comment)
-        self.logger.info(f"Follower '{self.comment.author}' commented on post by @{self.post.author.handle}: '{self.comment.content[:30]}...' if len(self.comment.content) > 30 else self.comment.content")
+        author_info = f"@{self.post.author.handle}" if self.post.author else "(no author)"
+        self.logger.info(f"Follower '{self.comment.author}' commented on post by {author_info}")
+        
+    def undo(self) -> None:
+        if self.comment in self.post.comments:
+            self.post.comments.remove(self.comment)
+            author_info = f"@{self.post.author.handle}" if self.post.author else "(no author)"
+            self.logger.info(f"Undid: Follower '{self.comment.author}' commented on post by {author_info}")
 
 
 class ShareCommand(Command):
@@ -39,7 +47,13 @@ class ShareCommand(Command):
         
     def execute(self) -> None:
         self.post.share()
-        self.logger.info(f"Follower '{self.follower_handle}' shared post by @{self.post.author.handle}")
+        author_info = f"@{self.post.author.handle}" if self.post.author else "(no author)"
+        self.logger.info(f"Follower '{self.follower_handle}' shared post by {author_info}")
+        
+    def undo(self) -> None:
+        self.post.unshare()
+        author_info = f"@{self.post.author.handle}" if self.post.author else "(no author)"
+        self.logger.info(f"Undid: Follower '{self.follower_handle}' shared post by {author_info}")
 
 
 class CommandHistory:
