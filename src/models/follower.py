@@ -52,9 +52,7 @@ class Follower(Observer):
         ]
 
         self.logger.debug(
-            f"Follower created: {handle} with {
-                sentiment.name} sentiment and political lean {
-                self.political_lean}")
+            f"Follower created: {handle} with {sentiment.name} sentiment and political lean {self.political_lean}")
 
     def update(self, subject, post=None):
         if post:
@@ -63,8 +61,7 @@ class Follower(Observer):
             # Chance to unfollow if strongly disagree with post
             if self._should_unfollow(post):
                 self.logger.info(
-                    f"Follower {
-                        self.handle} is unfollowing due to disagreement with post")
+                    f"Follower {self.handle} is unfollowing due to disagreement with post")
                 subject.detach(self)
 
                 # Create and execute a comment command for the unfollow notification
@@ -91,8 +88,7 @@ class Follower(Observer):
 
         if should_unfollow:
             self.logger.debug(
-                f"Follower {
-                    self.handle} decided to unfollow due to low alignment ({alignment})")
+                f"Follower {self.handle} decided to unfollow due to low alignment ({alignment})")
 
         return should_unfollow
 
@@ -115,9 +111,7 @@ class Follower(Observer):
 
         if old_lean != self.political_lean:
             self.logger.debug(
-                f"Follower {
-                    self.handle} political lean adjusted from {old_lean} to {
-                    self.political_lean}")
+                f"Follower {self.handle} political lean adjusted from {old_lean} to {self.political_lean}")
 
     def interact_with_post(self, post: Post) -> None:
         self._adjust_lean_from_sentiment(post.sentiment)
@@ -131,8 +125,7 @@ class Follower(Observer):
 
         author_info = f"by {post.author.handle}" if post.author else "(no author)"
         self.logger.debug(
-            f"Follower {
-                self.handle} has {alignment}% alignment with post {author_info}")
+            f"Follower {self.handle} has {alignment}% alignment with post {author_info}")
 
         # Decide whether to comment (30% chance)
         if randint(1, 100) <= 30:
@@ -157,8 +150,7 @@ class Follower(Observer):
             self.command_history.push(share_command)
 
             self.logger.info(
-                f"Follower {
-                    self.handle} liked and shared post due to high alignment ({alignment}%)")
+                f"Follower {self.handle} liked and shared post due to high alignment ({alignment}%)")
         elif alignment > 40:
             # Create and execute like command only
             like_command = LikeCommand(post, self.handle)
@@ -166,5 +158,4 @@ class Follower(Observer):
             self.command_history.push(like_command)
 
             self.logger.info(
-                f"Follower {
-                    self.handle} liked post due to moderate alignment ({alignment}%)")
+                f"Follower {self.handle} liked post due to moderate alignment ({alignment}%)")
