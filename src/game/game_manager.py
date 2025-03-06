@@ -84,18 +84,18 @@ class GameManager:
                        else "Great content! Just followed you!")
         post.add_comment(Comment(comment_text, follower.sentiment, follower.handle))
 
-    def handle_post_creation(self, content: str):
-        post = self.user.create_post(content)# Create a new post instance
+    def handle_post_creation(self, content: str, image_path: str = None):
+        # Create post through User class which uses PostBuilderFactory
+        post = self.user.create_post(content, image_path)
         self.dispatcher.process_post(post)  # Process the post through the dispatcher
 
         if post.is_spam:
-            self.mediator.get_ui_logic().show_notification("Post rejected: content is considered spam.")  # Check if the post was marked as spam
+            self.mediator.get_ui_logic().show_notification("Post rejected: content is considered spam.")
             return
         else: 
             view = self.mediator.get_view()
-            view.posts.insert(0, post)    # Stop the posting process if it's spam
+            view.posts.insert(0, post)
 
-        
         initial_followers = self.user.followers
         follow_chance = self.calculate_follow_chance(post.sentiment)
         

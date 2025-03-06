@@ -20,11 +20,37 @@ class Button:
         return self.rect.collidepoint(pos)
 
 class Post:
+    # Standard image dimensions
+    STANDARD_IMAGE_WIDTH = 500
+    STANDARD_IMAGE_HEIGHT = 300
+
     def __init__(self, post_data, fonts, width=600, padding=15):
         self.post = post_data
         self.fonts = fonts
         self.width = width
         self.padding = padding
+        self.image = None
+        if hasattr(self.post, 'image_path') and self.post.image_path:
+            try:
+                self.image = pygame.image.load(self.post.image_path)
+                # Scale image to standard size while maintaining aspect ratio
+                image_width = self.STANDARD_IMAGE_WIDTH
+                image_height = self.STANDARD_IMAGE_HEIGHT
+                
+                # Calculate scaling to fit within standard dimensions while maintaining aspect ratio
+                img_ratio = self.image.get_width() / self.image.get_height()
+                std_ratio = self.STANDARD_IMAGE_WIDTH / self.STANDARD_IMAGE_HEIGHT
+                
+                if img_ratio > std_ratio:  # Image is wider
+                    image_width = self.STANDARD_IMAGE_WIDTH
+                    image_height = int(image_width / img_ratio)
+                else:  # Image is taller
+                    image_height = self.STANDARD_IMAGE_HEIGHT
+                    image_width = int(image_height * img_ratio)
+                
+                self.image = pygame.transform.scale(self.image, (image_width, image_height))
+            except Exception as e:
+                print(f"Error loading image: {e}")
         self.height = self.calculate_height()
         
     def calculate_height(self):
@@ -45,6 +71,10 @@ class Post:
                 line = word + " "
             else:
                 line = test_line
+                
+        # Add height for image if present
+        if self.image:
+            height += self.image.get_height() + self.padding
                 
         return height + (num_lines * 25)
         
@@ -92,6 +122,12 @@ class Post:
         if line:
             text_surface = self.fonts['normal'].render(line, True, colors.TEXT_PRIMARY)
             screen.blit(text_surface, (x + self.padding, current_y))
+            current_y += 25
+            
+        # Draw image if present
+        if self.image:
+            screen.blit(self.image, (x + self.padding, current_y))
+            current_y += self.image.get_height() + self.padding
             
         # Follower impact stats
         current_y = y + self.height - 60

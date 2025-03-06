@@ -1,4 +1,5 @@
 import pygame
+import os
 from .views.main_view import MainView
 from src.game.game_manager import GameManager
 
@@ -19,6 +20,11 @@ class UILogic:
 
         #game manager instance
         self.game_manager = GameManager(self.mediator) 
+        
+        # Create uploads directory if it doesn't exist
+        self.uploads_dir = "uploads"
+        if not os.path.exists(self.uploads_dir):
+            os.makedirs(self.uploads_dir)
 
 
     def handle_mouse_wheel(self, event):
@@ -28,12 +34,15 @@ class UILogic:
                 # Scroll up (button 4) should show more content above (negative scroll)
                 # Scroll down (button 5) should show more content below (positive scroll)
                 if event.button == 4:  # Scroll up
-                    self.view.comments_scroll_y = min(0, self.view.comments_scroll_y + scroll_amount)
+                    self.view.comments_scroll_y += scroll_amount
                 else:  # Scroll down
-                    # Don't allow scrolling past the last comment
-                    if len(self.view.current_post.comments) * 100 > 800:  # If comments exceed view height
-                        max_scroll = -(len(self.view.current_post.comments) * 100 - 700)  # Leave some space at bottom
-                        self.view.comments_scroll_y = max(max_scroll, self.view.comments_scroll_y - scroll_amount)
+                    # Calculate max scroll based on number of comments
+                    total_comments_height = len(self.view.current_post.comments) * 90
+                    viewport_height = 500 - 200  # Modal height minus space for original post and padding
+                    max_scroll = -(max(0, total_comments_height - viewport_height))
+                    
+                    # Apply scroll with limits
+                    self.view.comments_scroll_y = max(max_scroll, self.view.comments_scroll_y - scroll_amount)
             else:
                 # Same logic for main feed
                 if event.button == 4:  # Scroll up
@@ -44,29 +53,37 @@ class UILogic:
                         self.view.scroll_y = max(max_scroll, self.view.scroll_y - scroll_amount)
                 
     def handle_mouse_click(self, pos):
-            if self.view.viewing_comments:
-                _, back_button = self.view.draw(self.game_manager.user, self.view.posts)
-                if back_button.collidepoint(pos):
-                    self.view.viewing_comments = False
-                    self.view.current_post = None
-                    
-            elif self.view.composing:
-                _, tweet_button = self.view.draw(self.game_manager.user, self.view.posts)
-                if tweet_button.collidepoint(pos) and self.view.compose_text:
-                    self.game_manager.handle_post_creation(self.view.compose_text)
-                    self.view.compose_text = ""
-                    self.view.composing = False
-                    
-            else:
-                post_rects, compose_button = self.view.draw(self.game_manager.user, self.view.posts)
-                if compose_button.collidepoint(pos):
-                    self.view.composing = True
+        if self.view.viewing_comments:
+            _, back_button = self.view.draw(self.game_manager.user, self.view.posts)
+            if back_button.collidepoint(pos):
+                self.view.viewing_comments = False
+                self.view.current_post = None
+                
+        elif self.view.composing:
+            _, tweet_button, upload_button = self.view.draw(self.game_manager.user, self.view.posts)
+            if tweet_button.collidepoint(pos) and self.view.compose_text:
+                # Create post with image if one is selected
+                if self.view.selected_image:
+                    self.game_manager.handle_post_creation(self.view.compose_text, self.view.selected_image)
                 else:
-                    for rect, post in post_rects:
-                        if rect.collidepoint(pos):
-                            self.view.viewing_comments = True
-                            self.view.current_post = post
-                            break
+                    self.game_manager.handle_post_creation(self.view.compose_text)
+                self.view.compose_text = ""
+                self.view.selected_image = None
+                self.view.image_preview = None
+                self.view.composing = False
+            elif upload_button.collidepoint(pos):
+                self.handle_image_upload()
+                
+        else:
+            post_rects, compose_button = self.view.draw(self.game_manager.user, self.view.posts)
+            if compose_button.collidepoint(pos):
+                self.view.composing = True
+            else:
+                for rect, post in post_rects:
+                    if rect.collidepoint(pos):
+                        self.view.viewing_comments = True
+                        self.view.current_post = post
+                        break
                             
     def handle_key_press(self, event):
             if not self.view.composing:
@@ -156,3 +173,50 @@ class UILogic:
                             waiting = False  # Close the pop-up on "X" button click
                     else:
                         waiting = False  # Close the pop-up on any key press 
+
+    def handle_image_upload(self):
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+            from PIL import Image  # We'll use PIL to handle image conversion
+            
+            # Create and hide the root window
+            root = tk.Tk()
+            root.withdraw()
+            
+            # Open file dialog
+            file_path = filedialog.askopenfilename(
+                title="Select an image",
+                filetypes=[
+                    ("PNG files", "*.png"),
+                    ("JPEG files", "*.jpg *.jpeg"),
+                    ("All image files", "*.png *.jpg *.jpeg *.gif *.bmp")
+                ]
+            )
+            
+            if file_path:
+                # Get the original filename without extension
+                filename = os.path.splitext(os.path.basename(file_path))[0]
+                new_path = os.path.join(self.uploads_dir, f"{filename}.png")
+                
+                # Open and convert image to PNG
+                with Image.open(file_path) as img:
+                    # Convert to RGB if necessary (in case of RGBA or other formats)
+                    if img.mode in ('RGBA', 'LA'):
+                        background = Image.new('RGB', img.size, (255, 255, 255))
+                        background.paste(img, mask=img.split()[-1])
+                        img = background
+                    elif img.mode != 'RGB':
+                        img = img.convert('RGB')
+                    
+                    # Save as PNG
+                    img.save(new_path, 'PNG')
+                
+                # Update view with selected image
+                self.view.selected_image = new_path
+                self.view.image_preview = pygame.image.load(new_path)
+                
+        except ImportError:
+            self.show_notification("Error: Please install Pillow library (pip install Pillow)")
+        except Exception as e:
+            self.show_notification(f"Error uploading image: {str(e)}") 

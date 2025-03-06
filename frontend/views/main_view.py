@@ -26,6 +26,8 @@ class MainView:
         self.viewing_comments = False
         self.current_post = None
         self.comments_scroll_y = 0
+        self.selected_image = None
+        self.image_preview = None
         
         # Layout
         self.sidebar_width = 300
@@ -68,7 +70,7 @@ class MainView:
         
         # Compose modal
         modal_width = 600
-        modal_height = 300
+        modal_height = 400  # Increased height for image preview
         x = (self.width - modal_width) // 2
         y = (self.height - modal_height) // 2
         
@@ -89,6 +91,23 @@ class MainView:
         else:
             placeholder = self.fonts['normal'].render("What's happening?", True, colors.TEXT_SECONDARY)
             self.screen.blit(placeholder, (x + 30, y + 80))
+            
+        # Image preview area
+        if self.image_preview:
+            preview_rect = pygame.Rect(x + 20, y + 240, modal_width - 40, 100)
+            pygame.draw.rect(self.screen, colors.BG_MAIN, preview_rect, border_radius=10)
+            # Scale image to fit preview area while maintaining aspect ratio
+            preview_width = preview_rect.width - 20
+            preview_height = preview_rect.height - 20
+            scaled_image = pygame.transform.scale(self.image_preview, (preview_width, preview_height))
+            self.screen.blit(scaled_image, (x + 30, y + 250))
+            
+        # Image upload button
+        self.upload_button = Button(
+            x + 20, y + 350,
+            150, 40, "Upload Image", self.fonts['normal']
+        )
+        self.upload_button.draw(self.screen)
         
         # Tweet button
         self.tweet_button = Button(
@@ -97,7 +116,7 @@ class MainView:
         )
         self.tweet_button.draw(self.screen)
         
-        return self.tweet_button.rect
+        return self.tweet_button.rect, self.upload_button.rect
         
     def draw_comments_modal(self):
         # Dark overlay
@@ -127,13 +146,51 @@ class MainView:
         post = Post(self.current_post, self.fonts, width=modal_width - 40)
         post.draw(self.screen, x + 20, post_y)
         
-        # Comments
-        comments_y = post_y + post.height + 20
+        # Comments section with scrolling
+        comments_start_y = post_y + post.height + 20
+        comments_viewport_height = max(50, modal_height - (comments_start_y - y) - 20)  # Ensure minimum height
+        
+        # Create a surface for comments with minimum dimensions
+        total_comments_height = max(50, len(self.current_post.comments) * 90)
+        comments_surface = pygame.Surface((max(1, modal_width - 40), total_comments_height))
+        comments_surface.fill(colors.BG_SECONDARY)
+        comments_surface.set_colorkey(colors.BG_SECONDARY)  # Make background transparent
+        
+        # Draw comments on the surface
+        current_y = 0
         for comment in self.current_post.comments:
-            if comments_y + 80 < y + modal_height - 20:  # Only draw visible comments
-                comment_ui = Comment(comment, self.fonts, width=modal_width - 40)
-                comment_ui.draw(self.screen, x + 20, comments_y)
-                comments_y += 90
+            comment_ui = Comment(comment, self.fonts, width=modal_width - 40)
+            comment_ui.draw(comments_surface, 0, current_y)
+            current_y += 90
+            
+        # Calculate max scroll with bounds checking
+        max_scroll = max(0, current_y - comments_viewport_height)
+        self.comments_scroll_y = min(0, max(-max_scroll, self.comments_scroll_y))
+        
+        # Create a viewport surface with guaranteed valid dimensions
+        viewport_surface = pygame.Surface((max(1, modal_width - 40), max(1, comments_viewport_height)))
+        viewport_surface.fill(colors.BG_SECONDARY)
+        viewport_rect = pygame.Rect(x + 20, comments_start_y, modal_width - 40, comments_viewport_height)
+        
+        # Draw the scrollable comments onto the viewport surface
+        viewport_surface.blit(comments_surface, (0, self.comments_scroll_y))
+        
+        # Draw the viewport surface onto the screen
+        self.screen.blit(viewport_surface, viewport_rect)
+        
+        # Draw scroll indicators if needed
+        if current_y > comments_viewport_height:
+            scroll_percent = abs(self.comments_scroll_y) / max_scroll
+            indicator_height = (comments_viewport_height / current_y) * comments_viewport_height
+            indicator_y = comments_start_y + (scroll_percent * (comments_viewport_height - indicator_height))
+            
+            # Draw scroll bar background
+            pygame.draw.rect(self.screen, colors.BG_HOVER,
+                           (x + modal_width - 25, comments_start_y, 5, comments_viewport_height))
+            
+            # Draw scroll bar indicator
+            pygame.draw.rect(self.screen, colors.PRIMARY,
+                           (x + modal_width - 25, indicator_y, 5, indicator_height))
                 
         return self.back_button.rect
         
@@ -162,8 +219,8 @@ class MainView:
             back_button = self.draw_comments_modal()
             return [], back_button
         elif self.composing:
-            tweet_button = self.draw_compose_modal()
-            return [], tweet_button
+            tweet_button, upload_button = self.draw_compose_modal()
+            return [], tweet_button, upload_button
         else:
             # Draw main feed
             post_rects = self.draw_feed(posts)
