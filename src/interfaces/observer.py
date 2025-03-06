@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 
 class Observer(ABC):
+    """
+    Abstract base class for all observers.
+    Includes the methods to update, attach, detach and notify.
+    """
     @abstractmethod
     def update(self, subject, post=None):
         pass

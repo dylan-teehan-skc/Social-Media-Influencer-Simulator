@@ -7,6 +7,15 @@ if TYPE_CHECKING:
     from src.models.user import User
 
 class TextPostBuilder(PostBuilder):
+    """
+    Builder for creating text posts.
+    implements the PostBuilder interface.
+
+    methods:
+    -set_content : sets the text content of the post.
+    -set_author : sets the author of the post.
+    -build : builds the post and returns it.
+    """
     def __init__(self):
         self.post = Post._create("")
         self._author = None

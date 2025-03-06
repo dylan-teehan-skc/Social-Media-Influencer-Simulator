@@ -4,6 +4,13 @@ from src.interfaces.post_builder import PostBuilder
 from src.services.logger_service import LoggerService
 
 class PostBuilderFactory:
+    """
+    A factory for creating post builders.
+    implements the PostBuilder interface.
+
+    methods:
+    -get_builder : returns the appropriate builder for the post type (text or image).
+    """
     @staticmethod
     def get_builder(post_type: str) -> PostBuilder:
         logger = LoggerService.get_logger()

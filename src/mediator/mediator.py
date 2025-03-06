@@ -1,5 +1,8 @@
-# mediator.py
 class Mediator:
+    """
+    Mediator class is responsible for organizing the interaction between the GameManager and the UILogic.
+    Notify method is used to notify the GameManager or UILogic of an event.
+    """
     def __init__(self):
         self.game_manager = None
         self.ui_logic = None
@@ -12,10 +15,8 @@ class Mediator:
 
     def notify(self, sender, event):
         if sender == self.game_manager:
-            # Handle events from GameManager
             self.ui_logic.handle_event(event)
         elif sender == self.ui_logic:
-            # Handle events from UILogic
             self.game_manager.handle_event(event)
 
     def get_view(self):

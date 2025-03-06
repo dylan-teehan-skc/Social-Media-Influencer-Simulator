@@ -1,6 +1,10 @@
 import logging
 
 class LoggerService:
+    """
+    This class is responsible for logging messages to the console.
+    It uses the singleton pattern to ensure that only one instance of the logger is created.
+    """
     _instance = None
     _logger = None
 

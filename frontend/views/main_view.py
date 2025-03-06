@@ -3,23 +3,38 @@ from . import colors
 from .components import Button, Post, Comment
 
 class MainView:
+    """
+    This Main UI class handles the overall layout.
+    It manages the screen, sidebar, and feed.
+
+    it handles various UI states:
+
+    - scroll_y: how far down the feed the user has scrolled.
+    - composing: whether the user is creating a new tweet.
+    - compose_text: the text being written for a new tweet.
+    - viewing_comments: whether the user is viewing comments on a post.
+    - current_post: the post whose comments the user is viewing.
+    - comments_scroll_y: how far down the comments the user has scrolled.
+    - selected_image: the path to an image the user has selected for a tweet.
+    - image_preview: the loaded preview of the selected image.
+
+    """
     def __init__(self, screen_width, screen_height):
         self.width = screen_width
         self.height = screen_height
         self.screen = pygame.display.set_mode((screen_width, screen_height))
         pygame.display.set_caption("Twitter-like Social Media")
         
-        # Initialize posts list
+        
         self.posts = []
         
-        # Fonts
         self.fonts = {
             'title': pygame.font.SysFont('Arial', 24, bold=True),
             'normal': pygame.font.SysFont('Arial', 16),
             'small': pygame.font.SysFont('Arial', 14)
         }
         
-        # UI State
+        # The UI State
         self.scroll_y = 0
         self.composing = False
         self.compose_text = ""
@@ -35,6 +50,11 @@ class MainView:
         self.post_width = screen_width - self.sidebar_width - (self.content_padding * 2)
         
     def draw_sidebar(self, user):
+        """
+        This draws the sidebar on the screen. (left side)
+        It draws the sidebar background, profile section, and new post button.
+
+        """
         # Sidebar background
         sidebar_rect = pygame.Rect(0, 0, self.sidebar_width, self.height)
         pygame.draw.rect(self.screen, colors.BG_SECONDARY, sidebar_rect)
@@ -62,6 +82,11 @@ class MainView:
         self.compose_button.draw(self.screen)
         
     def draw_compose_modal(self):
+        """
+        This draws the compose modal on the screen. (dialog box for creating a new tweet)
+        contains all the UI elements needed to create a new tweet.
+       
+        """
         # Dark overlay
         overlay = pygame.Surface((self.width, self.height))
         overlay.set_alpha(128)
@@ -70,7 +95,7 @@ class MainView:
         
         # Compose modal
         modal_width = 600
-        modal_height = 400  # Increased height for image preview
+        modal_height = 400  
         x = (self.width - modal_width) // 2
         y = (self.height - modal_height) // 2
         
@@ -96,7 +121,6 @@ class MainView:
         if self.image_preview:
             preview_rect = pygame.Rect(x + 20, y + 240, modal_width - 40, 100)
             pygame.draw.rect(self.screen, colors.BG_MAIN, preview_rect, border_radius=10)
-            # Scale image to fit preview area while maintaining aspect ratio
             preview_width = preview_rect.width - 20
             preview_height = preview_rect.height - 20
             scaled_image = pygame.transform.scale(self.image_preview, (preview_width, preview_height))
@@ -119,6 +143,11 @@ class MainView:
         return self.tweet_button.rect, self.upload_button.rect
         
     def draw_comments_modal(self):
+        """
+        This draws the comments modal on the screen. (dialog box for viewing comments on a post)
+        contains all the UI elements needed to view comments on a post.
+       
+        """
         # Dark overlay
         overlay = pygame.Surface((self.width, self.height))
         overlay.set_alpha(128)
@@ -148,13 +177,13 @@ class MainView:
         
         # Comments section with scrolling
         comments_start_y = post_y + post.height + 20
-        comments_viewport_height = max(50, modal_height - (comments_start_y - y) - 20)  # Ensure minimum height
+        comments_viewport_height = max(50, modal_height - (comments_start_y - y) - 20)  # Ensures the minimum height
         
         # Create a surface for comments with minimum dimensions
         total_comments_height = max(50, len(self.current_post.comments) * 90)
         comments_surface = pygame.Surface((max(1, modal_width - 40), total_comments_height))
         comments_surface.fill(colors.BG_SECONDARY)
-        comments_surface.set_colorkey(colors.BG_SECONDARY)  # Make background transparent
+        comments_surface.set_colorkey(colors.BG_SECONDARY)  #This makes the background transparent
         
         # Draw comments on the surface
         current_y = 0
@@ -209,10 +238,8 @@ class MainView:
         return post_rects
         
     def draw(self, user, posts):
-        # Fill background
         self.screen.fill(colors.BG_MAIN)
         
-        # Draw sidebar
         self.draw_sidebar(user)
         
         if self.viewing_comments:

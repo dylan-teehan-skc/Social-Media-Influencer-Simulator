@@ -5,20 +5,20 @@ from src.game.game_manager import GameManager
 
 class UILogic:
     def __init__(self, mediator):
+        """
+        This is the main class that handles the UI logic.
+        It initializes the mediator, view, game manager, and uploads directory.
+        """
 
-        #mediator
         self.mediator = mediator
         self.mediator.set_ui_logic(self)
 
         pygame.init()
         pygame.font.init()
         
-        #ui creation
         self.view = MainView(1200, 800)
         self.clock = pygame.time.Clock()
 
-
-        #game manager instance
         self.game_manager = GameManager(self.mediator) 
         
         # Create uploads directory if it doesn't exist
@@ -28,7 +28,7 @@ class UILogic:
 
 
     def handle_mouse_wheel(self, event):
-            scroll_amount = 40  # Increased from 20 for smoother scrolling
+            scroll_amount = 40  
             
             if self.view.viewing_comments:
                 # Scroll up (button 4) should show more content above (negative scroll)
@@ -44,7 +44,6 @@ class UILogic:
                     # Apply scroll with limits
                     self.view.comments_scroll_y = max(max_scroll, self.view.comments_scroll_y - scroll_amount)
             else:
-                # Same logic for main feed
                 if event.button == 4:  # Scroll up
                     self.view.scroll_y = min(0, self.view.scroll_y + scroll_amount)
                 else:  # Scroll down
@@ -178,9 +177,8 @@ class UILogic:
         try:
             import tkinter as tk
             from tkinter import filedialog
-            from PIL import Image  # We'll use PIL to handle image conversion
+            from PIL import Image 
             
-            # Create and hide the root window
             root = tk.Tk()
             root.withdraw()
             

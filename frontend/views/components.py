@@ -2,6 +2,17 @@ import pygame
 from . import colors
 
 class Button:
+    """
+    Class that defines the buttons used in the UI. 
+    'rect' is the pygame rectangle button.
+    'text' is what's on the button.
+    'font' is the font of the text.
+
+    __init__: initializes the button with the parameters given.
+    draw: draws the button on the screen.
+    is_clicked: checks if the button is clicked.
+
+    """
     def __init__(self, x, y, width, height, text, font, bg_color=colors.PRIMARY, text_color=colors.WHITE, border_radius=20):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
@@ -20,7 +31,15 @@ class Button:
         return self.rect.collidepoint(pos)
 
 class Post:
-    # Standard image dimensions
+    """
+    Post defines the posts used in the UI.
+
+    'post' is the post data.
+    'fonts' is the fonts used in the post.
+    'width' is the width of the post.
+    'padding' is the padding of the post.
+
+    """
     STANDARD_IMAGE_WIDTH = 500
     STANDARD_IMAGE_HEIGHT = 300
 
@@ -30,21 +49,26 @@ class Post:
         self.width = width
         self.padding = padding
         self.image = None
+
+        """
+        If an image exists, it loads it.
+        It scales the image and maintains the aspect ratio.
+        
+        """
         if hasattr(self.post, 'image_path') and self.post.image_path:
             try:
                 self.image = pygame.image.load(self.post.image_path)
-                # Scale image to standard size while maintaining aspect ratio
+               
                 image_width = self.STANDARD_IMAGE_WIDTH
                 image_height = self.STANDARD_IMAGE_HEIGHT
                 
-                # Calculate scaling to fit within standard dimensions while maintaining aspect ratio
                 img_ratio = self.image.get_width() / self.image.get_height()
                 std_ratio = self.STANDARD_IMAGE_WIDTH / self.STANDARD_IMAGE_HEIGHT
                 
-                if img_ratio > std_ratio:  # Image is wider
+                if img_ratio > std_ratio:  # The image is wider
                     image_width = self.STANDARD_IMAGE_WIDTH
                     image_height = int(image_width / img_ratio)
-                else:  # Image is taller
+                else:                      # The image is taller
                     image_height = self.STANDARD_IMAGE_HEIGHT
                     image_width = int(image_height * img_ratio)
                 
@@ -54,10 +78,13 @@ class Post:
         self.height = self.calculate_height()
         
     def calculate_height(self):
-        # Base height for padding and fixed elements
-        height = 140  # Increased to accommodate new stats
+        """
+        Calculates the height of the post.
+        Using the width, it calculates the height. 
+        If an image is added, it adds the height of the image and the padding.
+        """
+        height = 140 
         
-        # Add height for wrapped text
         content_width = self.width - (self.padding * 2)
         words = self.post.content.split()
         line = ""
@@ -72,13 +99,23 @@ class Post:
             else:
                 line = test_line
                 
-        # Add height for image if present
         if self.image:
             height += self.image.get_height() + self.padding
                 
         return height + (num_lines * 25)
         
     def draw(self, screen, x, y):
+        """
+        This draws the post on the screen using the elements:
+
+        --Author info and timestamp,
+        --Political sentiment indicator,
+        --Post content with text wrapping,
+        --Image (if it's present),
+        --Follower impact stats (if gained/lost),
+        --Engagement metrics (comments, shares, likes)
+
+        """
         # Post container
         post_rect = pygame.Rect(x, y, self.width, self.height)
         pygame.draw.rect(screen, colors.BG_SECONDARY, post_rect)
@@ -96,9 +133,9 @@ class Post:
         
         # Sentiment indicator
         sentiment_color = {
-            'LEFT': colors.PRIMARY,  # Twitter Blue for left
-            'RIGHT': colors.LIKE_RED,  # Red for right
-            'NEUTRAL': colors.TEXT_SECONDARY  # Gray for neutral
+            'LEFT': colors.PRIMARY,              # Twitter Blue for left
+            'RIGHT': colors.LIKE_RED,            # Red for right
+            'NEUTRAL': colors.TEXT_SECONDARY     # Gray for neutral
         }[self.post.sentiment.name]
         sentiment_text = self.fonts['small'].render(f"• {self.post.sentiment.name}", True, sentiment_color)
         screen.blit(sentiment_text, (x + self.width - self.padding - sentiment_text.get_width(), current_y))
@@ -124,7 +161,7 @@ class Post:
             screen.blit(text_surface, (x + self.padding, current_y))
             current_y += 25
             
-        # Draw image if present
+        # Draws the image if it exists.
         if self.image:
             screen.blit(self.image, (x + self.padding, current_y))
             current_y += self.image.get_height() + self.padding
@@ -164,6 +201,11 @@ class Comment:
         self.height = 80
         
     def draw(self, screen, x, y):
+
+        """
+        This draws the comment on the screen with the author name and content.
+        
+        """
         # Comment container
         comment_rect = pygame.Rect(x, y, self.width, self.height)
         pygame.draw.rect(screen, colors.BG_HOVER, comment_rect, border_radius=10)
