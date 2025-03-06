@@ -1,5 +1,6 @@
-from src.models.post import Post
 from src.interfaces.content_interceptor import ContentInterceptor
+from src.models.post import Post
+
 
 class Dispatcher:
     def __init__(self):
@@ -10,4 +11,4 @@ class Dispatcher:
 
     def process_post(self, post: Post) -> None:
         for interceptor in self.interceptors:
-            interceptor.intercept(post) 
+            interceptor.intercept(post)

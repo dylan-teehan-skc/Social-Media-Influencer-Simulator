@@ -1,5 +1,6 @@
 import logging
 
+
 class LoggerService:
     _instance = None
     _logger = None
@@ -17,4 +18,4 @@ class LoggerService:
 
     @classmethod
     def set_logger(cls, logger):
-        cls._logger = logger 
+        cls._logger = logger
