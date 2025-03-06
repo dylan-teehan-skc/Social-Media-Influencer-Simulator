@@ -56,6 +56,10 @@ jobs:
             -Dsonar.qualitygate.wait=true
             -Dsonar.cpd.exclusions=tests/**
             -Dsonar.python.flake8.reportPaths=flake8-report.txt
+            -Dsonar.coverage.jacoco.xmlReportPaths=coverage.xml
+            -Dsonar.qualitygate.quality_gate=custom_gate
+            -Dsonar.qualitygate.custom_gate.conditions=coverage
+            -Dsonar.qualitygate.custom_gate.coverage.threshold=50
             -Dsonar.issue.ignore.multicriteria=e1,e2,e3,e4
             -Dsonar.issue.ignore.multicriteria.e1.ruleKey=python:S1144
             -Dsonar.issue.ignore.multicriteria.e1.resourceKey=**/*.py
