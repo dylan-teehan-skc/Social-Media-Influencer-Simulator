@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+
 from src.models.post import Post
+
 
 class PostBuilder(ABC):
     """
@@ -16,4 +18,4 @@ class PostBuilder(ABC):
 
     @abstractmethod
     def build(self) -> Post:
-        pass 
+        pass

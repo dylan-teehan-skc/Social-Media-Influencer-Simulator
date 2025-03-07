@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+
+# pylint: disable=R0903
 class Observer(ABC):
     """
     Abstract base class for all observers.
@@ -7,7 +9,9 @@ class Observer(ABC):
     """
     @abstractmethod
     def update(self, subject, post=None):
+        """Update the observer with new information."""
         pass
+
 
 class Subject(ABC):
     def __init__(self):

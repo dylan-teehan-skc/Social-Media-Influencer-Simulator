@@ -1,5 +1,6 @@
 import logging
 
+
 class LoggerService:
     """
     This class is responsible for logging messages to the console.
@@ -21,4 +22,4 @@ class LoggerService:
 
     @classmethod
     def set_logger(cls, logger):
-        cls._logger = logger 
+        cls._logger = logger

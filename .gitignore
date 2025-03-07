@@ -43,3 +43,11 @@ logs/
 
 # Environment variables
 .env 
+
+# Uploads
+src/uploads/ 
+
+#lib_utils
+lib_utils/
+
+

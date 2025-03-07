@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class UserDecorator(ABC):
     """
     Abstract base class for all user decorators.

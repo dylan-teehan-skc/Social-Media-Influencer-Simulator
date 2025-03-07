@@ -1,5 +1,6 @@
 from src.interfaces.user_decorator import UserDecorator
 
+
 class SponsoredUser(UserDecorator):
     """
     Decorator for adding sponsored content to a user's posts.
@@ -15,6 +16,6 @@ class SponsoredUser(UserDecorator):
 
     def get_handle(self) -> str:
         return f"{self._user.handle} [Sponsored]"
-    
+
     def get_bio(self) -> str:
         return f"Sponsored by {self.company_name}"
