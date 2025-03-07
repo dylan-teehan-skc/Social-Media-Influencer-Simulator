@@ -1,4 +1,10 @@
 from random import randint
+from .post import Post, Sentiment, Comment
+from datetime import datetime
+from ..interfaces.observer import Observer
+from ..command.post_commands import LikeCommand, CommentCommand, ShareCommand, CommandHistory
+from ..services.logger_service import LoggerService
+
 
 from src.command.post_commands import (
     CommandHistory,
@@ -13,8 +19,9 @@ from src.services.logger_service import LoggerService
 
 class Follower(Observer):
     def __init__(self, sentiment: Sentiment, handle: str):
-        self.handle = handle
+        self.handle = handle  
         self.logger = LoggerService.get_logger()
+        
 
         # Set initial political lean based on sentiment
         if sentiment == Sentiment.LEFT:
@@ -50,6 +57,8 @@ class Follower(Observer):
             "I see it differently.",
             "Let's agree to disagree."
         ]
+        
+        self.logger.debug(f"Follower created: {handle} with {sentiment.name} sentiment and political lean {self.political_lean}")
 
         self.logger.debug(f"Follower created: {handle} with {sentiment.name} sentiment and political lean {self.political_lean}")
 
@@ -84,8 +93,10 @@ class Follower(Observer):
         # Higher chance to unfollow if strongly opposed to the post's sentiment
         should_unfollow = alignment < 20 and randint(1, 100) <= 30  # 30% chance if alignment < 20
 
+
         if should_unfollow:
             self.logger.debug(f"Follower {self.handle} decided to unfollow due to low alignment ({alignment})")
+
 
         return should_unfollow
 
@@ -105,6 +116,9 @@ class Follower(Observer):
         elif sentiment == Sentiment.LEFT:
             adjustment = randint(0, 10)
             self.political_lean = max(0, self.political_lean - adjustment)
+            
+        if old_lean != self.political_lean:
+            self.logger.debug(f"Follower {self.handle} political lean adjusted from {old_lean} to {self.political_lean}")
 
         if old_lean != self.political_lean:
             self.logger.debug(f"Follower {self.handle} political lean adjusted from {old_lean} to {self.political_lean}")
@@ -118,6 +132,7 @@ class Follower(Observer):
             alignment = self.political_lean
         else:
             alignment = 100 - abs(50 - self.political_lean) * 2
+
 
         author_info = f"by {post.author.handle}" if post.author else "(no author)"
         self.logger.debug(f"Follower {self.handle} has {alignment}% alignment with post {author_info}")

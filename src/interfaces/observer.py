@@ -3,7 +3,10 @@ from abc import ABC, abstractmethod
 
 # pylint: disable=R0903
 class Observer(ABC):
-    """Interface for observer pattern."""
+    """
+    Abstract base class for all observers.
+    Includes the methods to update, attach, detach and notify.
+    """
     @abstractmethod
     def update(self, subject, post=None):
         """Update the observer with new information."""

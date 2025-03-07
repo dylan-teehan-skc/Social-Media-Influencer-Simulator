@@ -9,6 +9,16 @@ if TYPE_CHECKING:
 
 
 class ImagePostBuilder(BasePostBuilder):
+    """
+    Builder for creating posts with images.
+    implements the PostBuilder interface.
+    
+    methods:
+    -set_content : sets the text content of the post.
+    -set_author : sets the author of the post.
+    -set_image : sets the image path of the post.
+    -build : builds the post and returns it.
+    """
     def __init__(self):
         super().__init__("ImagePostBuilder")
         self.logger = LoggerService.get_logger()

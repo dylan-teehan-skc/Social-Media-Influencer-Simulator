@@ -1,4 +1,5 @@
 from src.interfaces.command import Command
+
 from src.models.post import Comment, Post
 from src.services.logger_service import LoggerService
 
@@ -37,6 +38,7 @@ class CommentCommand(Command):
             self.logger.info(f"Undid: Follower '{self.comment.author}' commented on post by {author_info}")
 
 
+
 class ShareCommand(Command):
     """Command for sharing a post."""
 
@@ -71,3 +73,4 @@ class CommandHistory:
         """Clear the command history."""
         self.history.clear()
         self.logger.debug("Command history cleared")
+

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
 
+
 from src.services.logger_service import LoggerService
 
 if TYPE_CHECKING:
@@ -106,6 +107,7 @@ class Post:
             else:
                 self.sentiment = Sentiment.NEUTRAL
 
+
             self.logger.info(f"Post sentiment analyzed as {self.sentiment.name}")
 
         except (ImportError, ValueError) as e:
@@ -123,6 +125,7 @@ class Post:
         self.likes += 1
         self.logger.debug(f"Post liked, total likes: {self.likes}")
 
+
     def unlike(self) -> None:
         if self.likes > 0:
             self.likes -= 1
@@ -133,6 +136,7 @@ class Post:
     def share(self) -> None:
         self.shares += 1
         self.logger.debug(f"Post shared, total shares: {self.shares}")
+
 
     def unshare(self) -> None:
         if self.shares > 0:
@@ -169,6 +173,7 @@ class Post:
         """
 
         self.logger.debug("Sending content to Google AI for sentiment analysis")
+
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model="gemini-2.0-flash",

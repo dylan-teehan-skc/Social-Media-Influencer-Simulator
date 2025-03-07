@@ -9,6 +9,15 @@ if TYPE_CHECKING:
 
 
 class TextPostBuilder(BasePostBuilder):
+    """
+    Builder for creating text posts.
+    implements the PostBuilder interface.
+
+    methods:
+    -set_content : sets the text content of the post.
+    -set_author : sets the author of the post.
+    -build : builds the post and returns it.
+    """
     def __init__(self):
         super().__init__("TextPostBuilder")
         self.logger = LoggerService.get_logger()

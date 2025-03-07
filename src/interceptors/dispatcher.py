@@ -3,6 +3,10 @@ from src.models.post import Post
 
 
 class Dispatcher:
+    """
+    The Dispatcher class is responsible for dispatching posts to the appropriate interceptors.
+    It also holds the list of interceptors.
+    """
     def __init__(self):
         self.interceptors = []
 
