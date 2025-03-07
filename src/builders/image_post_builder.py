@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from src.models.user import User
 
 
-class ImagePostBuilder(PostBuilder):
+class ImagePostBuilder(BasePostBuilder):
     """
     Builder for creating posts with images.
     implements the PostBuilder interface.
