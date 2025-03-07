@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from src.models.user import User
 
 
-class TextPostBuilder(PostBuilder):
+class TextPostBuilder(BasePostBuilder):
     """
     Builder for creating text posts.
     implements the PostBuilder interface.
