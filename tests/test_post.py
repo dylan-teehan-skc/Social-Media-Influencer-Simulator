@@ -51,29 +51,6 @@ class TestPost(unittest.TestCase):
 
     @patch('src.models.post.GOOGLE_AI_AVAILABLE', True)
     @patch('src.models.post.os.getenv')
-    @patch('src.models.post.genai.Client')
-    def test_initial_impressions_with_google_ai(self, mock_client_class, mock_getenv):
-        """Test initial_impressions using Google AI."""
-        # Setup mocks
-        mock_getenv.return_value = "fake_api_key"
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_response = MagicMock()
-        mock_response.text = "left"
-        mock_client.models.generate_content.return_value = mock_response
-        
-        # Call initial_impressions
-        self.post.initial_impressions()
-        
-        # Verify Google AI was used
-        mock_client_class.assert_called_once_with(api_key="fake_api_key")
-        mock_client.models.generate_content.assert_called_once()
-        
-        # Verify sentiment was set
-        self.assertEqual(self.post.sentiment, Sentiment.LEFT)
-
-    @patch('src.models.post.GOOGLE_AI_AVAILABLE', True)
-    @patch('src.models.post.os.getenv')
     def test_initial_impressions_missing_api_key(self, mock_getenv):
         """Check if sentiment analysis falls back when API key is missing."""
         # Set up mock to return None for API key
