@@ -105,7 +105,7 @@ class UILogic:
     def run(self):
         running = True
         while running:
-            self.game_manager.update_potential_followers()
+            self.game_manager.update_game_state()
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
