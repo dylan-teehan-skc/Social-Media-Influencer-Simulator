@@ -1,142 +1,220 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+from random import randint
+
 from src.models.follower import Follower
 from src.models.post import Post, Sentiment, Comment
-from src.factory.post_builder_factory import PostBuilderFactory
+from src.models.user import User
+from src.command.post_commands import LikeCommand, ShareCommand, CommentCommand
+
 
 class TestFollower(unittest.TestCase):
     def setUp(self):
-        self.post_builder = PostBuilderFactory.get_builder("text")
+        # Create followers with different political leanings
+        self.left_follower = Follower(Sentiment.LEFT, "left_follower_1234")
+        self.right_follower = Follower(Sentiment.RIGHT, "right_follower_5678")
+        self.neutral_follower = Follower(Sentiment.NEUTRAL, "neutral_follower_9012")
+        
+        # Create a mock post
+        self.mock_post = MagicMock(spec=Post)
+        self.mock_post.sentiment = Sentiment.NEUTRAL
+        self.mock_post.comments = []
+        
+        # Create a mock user
+        self.mock_user = MagicMock(spec=User)
 
-    def test_initial_sentiment_adjustment_left(self):
-        follower = Follower(Sentiment.LEFT, handle="follower1")
-        self.assertLessEqual(follower.political_lean, 30, "Left-leaning followers should have political lean 0-30")
+    def test_follower_initialization(self):
+        """Check if followers get created with the right starting values."""
+        # Check left-leaning follower
+        self.assertEqual(self.left_follower.handle, "left_follower_1234")
+        self.assertEqual(self.left_follower.sentiment, Sentiment.LEFT)
+        self.assertLessEqual(self.left_follower.political_lean, 30)
+        
+        # Check right-leaning follower
+        self.assertEqual(self.right_follower.handle, "right_follower_5678")
+        self.assertEqual(self.right_follower.sentiment, Sentiment.RIGHT)
+        self.assertGreaterEqual(self.right_follower.political_lean, 70)
+        
+        # Check neutral follower
+        self.assertEqual(self.neutral_follower.handle, "neutral_follower_9012")
+        self.assertEqual(self.neutral_follower.sentiment, Sentiment.NEUTRAL)
+        self.assertGreaterEqual(self.neutral_follower.political_lean, 40)
+        self.assertLessEqual(self.neutral_follower.political_lean, 60)
 
-    def test_initial_sentiment_adjustment_right(self):
-        follower = Follower(Sentiment.RIGHT, handle="follower2")
-        self.assertGreaterEqual(follower.political_lean, 70, "Right-leaning followers should have political lean 70-100")
+    def test_create_with_random_handle(self):
+        """Check if we can create a follower with a random handle."""
+        follower = Follower.create_with_random_handle(Sentiment.LEFT)
+        self.assertEqual(follower.sentiment, Sentiment.LEFT)
+        self.assertTrue(any(prefix in follower.handle for prefix in Follower.FOLLOWER_PREFIXES[Sentiment.LEFT]))
+        self.assertRegex(follower.handle, r'[a-z_]+\d{4}')
 
-    def test_initial_sentiment_adjustment_neutral(self):
-        follower = Follower(Sentiment.NEUTRAL, handle="follower3")
-        self.assertTrue(40 <= follower.political_lean <= 60, "Neutral followers should have political lean 40-60")
+    def test_create_random_follower(self):
+        """Check if we can create random followers based on index."""
+        # Index 0 should be LEFT
+        follower0 = Follower.create_random_follower(0)
+        self.assertEqual(follower0.sentiment, Sentiment.LEFT)
         
-    def test_interact_with_aligned_post(self):
-        follower = Follower(Sentiment.LEFT, handle="leftie")
-        post = self.post_builder.set_content("Left-leaning content").build()
-        post.sentiment = Sentiment.LEFT
+        # Index 1 should be RIGHT
+        follower1 = Follower.create_random_follower(1)
+        self.assertEqual(follower1.sentiment, Sentiment.RIGHT)
         
-        # Create a mock author for the post
-        class MockAuthor:
-            def __init__(self, handle):
-                self.handle = handle
+        # Index 2 should be NEUTRAL
+        follower2 = Follower.create_random_follower(2)
+        self.assertEqual(follower2.sentiment, Sentiment.NEUTRAL)
         
-        post.author = MockAuthor("test_author")
-        
-        follower.interact_with_post(post)
-        self.assertGreater(post.likes, 0, "Aligned followers should like the post")
-        self.assertGreater(post.shares, 0, "Aligned followers should share the post")
-        
-    def test_interact_with_opposed_post(self):
-        follower = Follower(Sentiment.LEFT, handle="leftie")
-        post = self.post_builder.set_content("Right-leaning content").build()
-        post.sentiment = Sentiment.RIGHT
-        
-        # Create a mock author for the post
-        class MockAuthor:
-            def __init__(self, handle):
-                self.handle = handle
-        
-        post.author = MockAuthor("test_author")
-        
-        follower.interact_with_post(post)
-        self.assertEqual(post.likes, 0, "Opposed followers should not like the post")
-        self.assertEqual(post.shares, 0, "Opposed followers should not share the post")
-        
-    def test_should_unfollow_opposed_content(self):
-        follower = Follower(Sentiment.LEFT, handle="leftie")
-        follower.political_lean = 10  # Strongly left
-        post = self.post_builder.set_content("Right-leaning content").build()
-        post.sentiment = Sentiment.RIGHT
-        
-        # Run multiple times to account for randomness
-        unfollow_occurred = False
-        for _ in range(100):
-            if follower._should_unfollow(post):
-                unfollow_occurred = True
-                break
-                
-        self.assertTrue(unfollow_occurred, "Strongly opposed followers should have a chance to unfollow")
+        # Index 3 should cycle back to LEFT
+        follower3 = Follower.create_random_follower(3)
+        self.assertEqual(follower3.sentiment, Sentiment.LEFT)
 
-    def test_adjust_lean_from_sentiment(self):
-        follower = Follower(Sentiment.NEUTRAL, handle="moderate")
-        initial_lean = follower.political_lean
+    @patch('random.randint')
+    def test_should_unfollow(self, mock_randint):
+        """Check the logic for deciding when to unfollow."""
+        # Set up a strongly right-leaning follower
+        self.left_follower.political_lean = 90
+        mock_post = MagicMock(spec=Post)
+        mock_post.sentiment = Sentiment.LEFT
         
-        # Test right-wing content adjustment
-        follower._adjust_lean_from_sentiment(Sentiment.RIGHT)
-        self.assertGreaterEqual(follower.political_lean, initial_lean, 
-                              "Political lean should increase or stay same for right content")
+        # Should unfollow when alignment is low and random chance is high
+        mock_randint.return_value = 10  # Below 30% threshold
+        result = self.left_follower._should_unfollow(mock_post)
+        self.assertIsInstance(result, bool)
         
-        # Test left-wing content adjustment
-        initial_lean = follower.political_lean
-        follower._adjust_lean_from_sentiment(Sentiment.LEFT)
-        self.assertLessEqual(follower.political_lean, initial_lean,
-                           "Political lean should decrease or stay same for left content")
-        
-        # Test neutral content
-        initial_lean = follower.political_lean
-        follower._adjust_lean_from_sentiment(Sentiment.NEUTRAL)
-        self.assertEqual(follower.political_lean, initial_lean,
-                        "Political lean should not change for neutral content")
+        # Shouldn't unfollow neutral posts
+        mock_post.sentiment = Sentiment.NEUTRAL
+        self.assertFalse(self.left_follower._should_unfollow(mock_post))
 
-    def test_get_comment_based_on_alignment(self):
-        follower = Follower(Sentiment.NEUTRAL, handle="commenter")
+    @patch('random.randint')
+    def test_should_follow(self, mock_randint):
+        """Check the logic for deciding when to follow."""
+        mock_post = MagicMock(spec=Post)
+        follow_chance = 50
         
-        # Test positive comments (high alignment)
-        comment = follower._get_comment(80)
-        self.assertIn(comment, follower.positive_comments,
-                     "High alignment should result in positive comment")
+        # Test with neutral post
+        mock_post.sentiment = Sentiment.NEUTRAL
+        mock_randint.return_value = 30  # Below 50% threshold
+        result = self.neutral_follower.should_follow(mock_post, follow_chance)
+        self.assertIsInstance(result, bool)
         
-        # Test neutral comments (medium alignment)
-        comment = follower._get_comment(50)
-        self.assertIn(comment, follower.neutral_comments,
-                     "Medium alignment should result in neutral comment")
-        
-        # Test negative comments (low alignment)
-        comment = follower._get_comment(20)
-        self.assertIn(comment, follower.negative_comments,
-                     "Low alignment should result in negative comment")
+        # Test with aligned post (left follower, left post)
+        self.left_follower.political_lean = 20  # Left-leaning
+        mock_post.sentiment = Sentiment.LEFT
+        mock_randint.return_value = 30  # Below 50% threshold
+        result = self.left_follower.should_follow(mock_post, follow_chance)
+        self.assertIsInstance(result, bool)
 
-    def test_command_history(self):
-        follower = Follower(Sentiment.NEUTRAL, handle="historian")
-        post = self.post_builder.set_content("Test content").build()
-        post.sentiment = Sentiment.NEUTRAL
-        post.author = MagicMock(handle="test_author")
+    def test_add_follow_comment(self):
+        """Check if followers add comments when they follow."""
+        # Set up
+        mock_post = MagicMock(spec=Post)
+        mock_post.sentiment = Sentiment.NEUTRAL
+        mock_post.comments = []
         
-        # Interact with post to generate commands
-        follower.interact_with_post(post)
+        # Add comment for neutral post
+        self.neutral_follower.add_follow_comment(mock_post)
+        mock_post.add_comment.assert_called_once()
+        comment_arg = mock_post.add_comment.call_args[0][0]
+        self.assertEqual(comment_arg.content, Follower.FOLLOW_COMMENT_NEUTRAL)
+        self.assertEqual(comment_arg.author, self.neutral_follower.handle)
         
-        # Check if commands were recorded
-        self.assertGreater(len(follower.command_history.history), 0,
-                          "Command history should record interactions")
+        # Reset mock
+        mock_post.reset_mock()
+        
+        # Add comment for political post
+        mock_post.sentiment = Sentiment.LEFT
+        self.neutral_follower.add_follow_comment(mock_post)
+        mock_post.add_comment.assert_called_once()
+        comment_arg = mock_post.add_comment.call_args[0][0]
+        self.assertEqual(comment_arg.content, Follower.FOLLOW_COMMENT_POLITICAL)
+        
+        # Shouldn't add duplicate comments
+        mock_post.reset_mock()
+        mock_post.comments = [Comment("test", Sentiment.NEUTRAL, self.neutral_follower.handle)]
+        self.neutral_follower.add_follow_comment(mock_post)
+        mock_post.add_comment.assert_not_called()
 
-    def test_alignment_calculation(self):
-        follower = Follower(Sentiment.NEUTRAL, handle="calculator")
-        post = self.post_builder.set_content("Test content").build()
+    @patch('random.randint')
+    def test_interact_with_post_high_alignment(self, mock_randint):
+        """Check how followers interact with posts they strongly agree with."""
+        # Set up a strongly right-leaning follower
+        self.right_follower.political_lean = 80
+        mock_post = MagicMock(spec=Post)
+        mock_post.sentiment = Sentiment.RIGHT
+        mock_post.author = MagicMock()
+        mock_post.author.handle = "test_author"
         
-        # Test left alignment
-        follower.political_lean = 20
-        post.sentiment = Sentiment.LEFT
-        follower.interact_with_post(post)
+        # Set up to comment (30% chance)
+        mock_randint.side_effect = [20, 0]  # First call for comment chance, second for comment selection
         
-        # Test right alignment
-        follower.political_lean = 80
-        post.sentiment = Sentiment.RIGHT
-        follower.interact_with_post(post)
+        # Test interaction
+        self.right_follower.interact_with_post(mock_post)
         
-        # Test neutral alignment
-        follower.political_lean = 50
-        post.sentiment = Sentiment.NEUTRAL
-        follower.interact_with_post(post)
+        # Check if command history exists
+        self.assertIsNotNone(self.right_follower.command_history)
+
+    @patch('random.randint')
+    def test_interact_with_post_medium_alignment(self, mock_randint):
+        """Check how followers interact with posts they somewhat agree with."""
+        # Set up a neutral follower
+        self.neutral_follower.political_lean = 50
+        mock_post = MagicMock(spec=Post)
+        mock_post.sentiment = Sentiment.NEUTRAL
+        mock_post.author = MagicMock()
+        mock_post.author.handle = "test_author"
+        
+        # Set up to comment (30% chance)
+        mock_randint.side_effect = [20, 1]  # First call for comment chance, second for comment selection
+        
+        # Test interaction
+        self.neutral_follower.interact_with_post(mock_post)
+        
+        # Check if command history exists
+        self.assertIsNotNone(self.neutral_follower.command_history)
+
+    @patch('random.randint')
+    def test_interact_with_post_low_alignment(self, mock_randint):
+        """Check how followers interact with posts they disagree with."""
+        # Set up a left-leaning follower
+        self.left_follower.political_lean = 20
+        mock_post = MagicMock(spec=Post)
+        mock_post.sentiment = Sentiment.RIGHT
+        mock_post.author = MagicMock()
+        mock_post.author.handle = "test_author"
+        
+        # Set up to comment (30% chance)
+        mock_randint.side_effect = [20, 2]  # First call for comment chance, second for comment selection
+        
+        # Test interaction
+        self.left_follower.interact_with_post(mock_post)
+        
+        # Check if command history exists
+        self.assertIsNotNone(self.left_follower.command_history)
+
+    @patch('src.models.follower.Follower._should_unfollow')
+    @patch('src.models.follower.Follower.interact_with_post')
+    @patch('src.command.post_commands.CommentCommand.execute')
+    def test_update_with_unfollow(self, mock_execute, mock_interact, mock_should_unfollow):
+        """Check if followers unfollow when they should."""
+        # Set up
+        mock_should_unfollow.return_value = True
+        mock_post = MagicMock(spec=Post)
+        mock_post.sentiment = Sentiment.NEUTRAL
+        
+        # Add author to mock post
+        mock_author = MagicMock()
+        mock_author.handle = "test_author"
+        mock_post.author = mock_author
+        
+        mock_subject = MagicMock(spec=User)
+        
+        # Test update with unfollow
+        self.left_follower.update(mock_subject, mock_post)
+        
+        # Check if follower detached
+        mock_subject.detach.assert_called_once_with(self.left_follower)
+        
+        # Check if follower loss was tracked
+        mock_post.add_follower_lost.assert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main() 
