@@ -12,6 +12,21 @@ from src.services.logger_service import LoggerService
 
 
 class Follower(Observer):
+    # Political lean thresholds
+    LEFT_LEAN_THRESHOLD = 40
+    RIGHT_LEAN_THRESHOLD = 60
+    
+    # Comment types
+    FOLLOW_COMMENT_NEUTRAL = "Balanced take! Following for more."
+    FOLLOW_COMMENT_POLITICAL = "Great content! Just followed you!"
+    
+    # Follower handle prefixes by sentiment
+    FOLLOWER_PREFIXES = {
+        Sentiment.LEFT: ["progressive_", "leftist_", "socialist_", "liberal_"],
+        Sentiment.RIGHT: ["conservative_", "traditional_", "freedom_", "patriot_"],
+        Sentiment.NEUTRAL: ["moderate_", "centrist_", "balanced_", "neutral_"]
+    }
+
     def __init__(self, sentiment: Sentiment, handle: str):
         self.handle = handle
         self.logger = LoggerService.get_logger()
@@ -53,6 +68,20 @@ class Follower(Observer):
 
         self.logger.debug(f"Follower created: {handle} with {sentiment.name} sentiment and political lean {self.political_lean}")
 
+    @classmethod
+    def create_with_random_handle(cls, sentiment: Sentiment):
+        """Create a follower with a randomly generated handle based on sentiment."""
+        prefixes = cls.FOLLOWER_PREFIXES[sentiment]
+        prefix = prefixes[randint(0, len(prefixes) - 1)]
+        handle = f"{prefix}{randint(1000, 9999)}"
+        return cls(sentiment, handle)
+        
+    @classmethod
+    def create_random_follower(cls, index: int):
+        """Create a follower with random sentiment based on index."""
+        sentiment = list(cls.FOLLOWER_PREFIXES.keys())[index % 3]
+        return cls.create_with_random_handle(sentiment)
+
     def update(self, subject, post=None):
         if post:
             self.interact_with_post(post)
@@ -88,6 +117,36 @@ class Follower(Observer):
             self.logger.debug(f"Follower {self.handle} decided to unfollow due to low alignment ({alignment})")
 
         return should_unfollow
+        
+    def should_follow(self, post: Post, follow_chance: int) -> bool:
+        """Determine if follower should follow based on post sentiment and follow chance."""
+        if post.sentiment == Sentiment.NEUTRAL:
+            return randint(1, 100) <= follow_chance
+
+        right_aligned = (
+            self.political_lean > self.RIGHT_LEAN_THRESHOLD and
+            post.sentiment == Sentiment.RIGHT
+        )
+        left_aligned = (
+            self.political_lean < self.LEFT_LEAN_THRESHOLD and
+            post.sentiment == Sentiment.LEFT
+        )
+        is_aligned = right_aligned or left_aligned
+        return is_aligned and randint(1, 100) <= follow_chance
+        
+    def add_follow_comment(self, post: Post) -> None:
+        """Add a comment to the post when following."""
+        # Check if we've already commented on this post (to avoid duplicates)
+        for comment in post.comments:
+            if comment.author == self.handle:
+                return  # Already commented, don't add another
+                
+        comment_text = (
+            self.FOLLOW_COMMENT_NEUTRAL
+            if post.sentiment == Sentiment.NEUTRAL
+            else self.FOLLOW_COMMENT_POLITICAL
+        )
+        post.add_comment(Comment(comment_text, self.sentiment, self.handle))
 
     def _get_comment(self, alignment: float) -> str:
         if alignment > 70:
