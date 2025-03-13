@@ -1,13 +1,14 @@
 import unittest
 from unittest.mock import MagicMock
 
-from src.decorator.verified_user import VerifiedUser
-from src.decorator.sponsered_user import SponsoredUser
+from src.patterns.decorator.verified_user import VerifiedUser
+from src.patterns.decorator.sponsered_user import SponsoredUser
 from src.models.user import User
 
 
 class TestUserDecorator(unittest.TestCase):
     def setUp(self):
+        """Set up test fixtures."""
         # Create a mock user
         self.mock_user = MagicMock(spec=User)
         self.mock_user.handle = "test_user"
@@ -50,10 +51,21 @@ class TestUserDecorator(unittest.TestCase):
         self.assertEqual(self.mock_user.bio, self.original_bio)
 
     def test_nested_decorators(self):
-        """Check if we can stack decorators (skipped for now)."""
-        # Skip this test for now as it requires changes to the decorator implementation
-        # The current implementation doesn't support nested decorators properly
-        pass
+        """Check if we can stack decorators."""
+        # Create a verified and sponsored user
+        company_name = "Test Company"
+        verified_user = VerifiedUser(self.mock_user)
+        verified_sponsored_user = SponsoredUser(verified_user, company_name)
+        
+        # Check if handle has both decorations
+        self.assertEqual(verified_sponsored_user.get_handle(), "test_user ✔️ [Sponsored]")
+        
+        # Check if bio shows sponsor info (last decorator takes precedence)
+        self.assertEqual(verified_sponsored_user.get_bio(), f"Sponsored by {company_name}")
+        
+        # Check if original user is unchanged
+        self.assertEqual(self.mock_user.handle, self.original_handle)
+        self.assertEqual(self.mock_user.bio, self.original_bio)
 
 
 if __name__ == '__main__':
