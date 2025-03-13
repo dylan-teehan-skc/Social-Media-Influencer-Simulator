@@ -1,0 +1,230 @@
+from datetime import datetime
+from src.models.user import User
+from src.models.post import Post, Comment, Sentiment
+from src.patterns.factory.post_builder_factory import PostBuilderFactory
+from src.services.logger_service import LoggerService
+from src.controllers.follower_controller import FollowerController
+from src.controllers.post_controller import PostController
+
+class UserController:
+    """Controller for User model operations."""
+    
+    def __init__(self, user=None):
+        """Initialize with a user model."""
+        self.user = user or User("default_user", "Default bio")
+        self.logger = LoggerService.get_logger()
+        self.follower_controller = FollowerController()
+        self.post_controller = PostController()  # Make sure this is initialized
+        
+    def create_post(self, content, image_path=None):
+        """Create a new post for the user."""
+        # Use the factory to create the appropriate post builder
+        factory = PostBuilderFactory()
+        
+        # Determine the post type based on whether an image is provided
+        post_type = "image" if image_path else "text"
+        
+        # Get the appropriate builder
+        builder = factory.get_builder(post_type)
+        
+        # Build the post
+        builder.set_content(content)
+        builder.set_author(self.user)
+        
+        if image_path:
+            builder.set_image_path(image_path)
+        
+        # Get the post from the builder
+        post = builder.build()
+        
+        # Analyze sentiment and set it on the post
+        sentiment = self.post_controller.analyze_sentiment(content)
+        post.sentiment = sentiment
+        
+        # Add the post to the user's posts
+        self.user._posts.append(post)
+        
+        # Emit the post_created signal
+        self.user.post_created.emit(post)
+        
+        # Log the post creation
+        self.logger.info(f"User {self.user.handle} created a post: {content[:30]}...")
+        
+        # Generate new followers based on the post
+        initial_follower_count = self.user._follower_count
+        new_followers = self.generate_new_followers(post)
+        
+        if new_followers > 0:
+            self.logger.info(f"Post attracted {new_followers} new followers")
+            
+            # Use the controller's notify_followers method
+            self.notify_followers(post)
+            
+            # Add new followers as observers
+            for follower in self.user._followers[initial_follower_count:]:
+                self.user.attach(follower, post)
+                self.logger.debug(f"Added follower {follower.handle} as observer")
+        
+        return post
+        
+    def add_follower(self, follower, post=None):
+        """Add a follower to the user."""
+        if follower not in self.user._followers:
+            self.user._followers.append(follower)
+            self.user._follower_count += 1
+            self.user.follower_added.emit(follower)
+            
+            # Add follower as observer
+            self.user.attach(follower, post)
+            
+            # If a post attracted this follower, make them interact with it
+            if post:
+                follower.interact_with_post(post)
+                
+            # Log the follower addition
+            self.logger.info(f"User {self.user.handle} gained a follower: {follower.handle}")
+            
+    def remove_follower(self, follower):
+        """Remove a follower from the user."""
+        if follower in self.user._followers:
+            self.user._followers.remove(follower)
+            self.user._follower_count -= 1
+            self.user.follower_removed.emit(follower)
+            
+            # Detach follower as observer
+            self.user.detach(follower)
+            
+            # Log the follower removal
+            self.logger.info(f"User {self.user.handle} lost a follower: {follower.handle}")
+            
+    def generate_new_followers(self, post, count=None):
+        """
+        Generate new followers based on a post.
+        
+        Args:
+            post: The post that might attract followers.
+            count: Optional number of followers to try to generate. If None, uses a default value.
+            
+        Returns:
+            Number of new followers gained.
+        """
+        if count is None:
+            # Default to a number based on current follower count
+            # More followers = more potential new followers
+            base_count = 5
+            follower_bonus = min(15, self.user._follower_count // 10)
+            count = base_count + follower_bonus
+            
+        # Calculate follow chance based on post sentiment
+        follow_chance = self.follower_controller.calculate_follow_chance(self.user, post.sentiment)
+        
+        # Generate potential followers
+        potential_followers = self.follower_controller.generate_potential_followers(post, count)
+        
+        # Count how many actually follow
+        new_followers = 0
+        
+        for follower in potential_followers:
+            if self.follower_controller.should_follow(follower, post, follow_chance):
+                self.add_follower(follower, post)
+                self.follower_controller.add_follow_comment(follower, post)
+                new_followers += 1
+                
+        self.logger.info(f"Generated {new_followers} new followers from {count} potential followers")
+        return new_followers
+            
+    def update_reputation(self, initial_followers, post):
+        """Update reputation based on follower losses from a post."""
+        if self.user._follower_count < initial_followers:
+            lost_followers = initial_followers - self.user._follower_count
+            self.user._recent_follower_losses += lost_followers
+            self.user.reputation_changed.emit(self.user._recent_follower_losses)
+            
+            self.logger.warning(
+                "Lost %d followers. Total recent losses: %d",
+                lost_followers,
+                self.user._recent_follower_losses
+            )
+
+            if self.user._recent_follower_losses >= self.user.REPUTATION_WARNING_THRESHOLD:
+                post._add_comment(Comment(
+                    "Your recent posts are driving followers away...",
+                    Sentiment.NEUTRAL,
+                    "system_warning"
+                ))
+                self.logger.warning(
+                    "Reputation warning threshold reached: %d",
+                    self.user._recent_follower_losses
+                )
+                
+            return lost_followers
+        return 0
+        
+    def update_reputation_recovery(self, current_time=None):
+        """Recover reputation over time."""
+        if current_time is None:
+            current_time = datetime.now().timestamp() * 1000  # Convert to milliseconds
+            
+        if current_time - self.user._last_reputation_check >= self.user.REPUTATION_RECOVERY_DELAY:
+            if self.user._recent_follower_losses > 0:
+                old_losses = self.user._recent_follower_losses
+                self.user._recent_follower_losses = max(0, self.user._recent_follower_losses - 1)
+                self.user.reputation_changed.emit(self.user._recent_follower_losses)
+                self.logger.info(
+                    "Reputation recovered: losses decreased from %d to %d",
+                    old_losses,
+                    self.user._recent_follower_losses
+                )
+            self.user._last_reputation_check = current_time
+            
+    def edit_post(self, post, new_content=None, new_image_path=None):
+        """Edit a post."""
+        if post in self.user._posts:
+            if new_content:
+                post.content = new_content
+            if new_image_path:
+                post.image_path = new_image_path
+                
+            self.logger.info(f"User {self.user.handle} edited a post: {post.content[:30]}...")
+            
+    def delete_post(self, post):
+        """Delete a post."""
+        if post in self.user._posts:
+            self.user._posts.remove(post)
+            self.logger.info(f"User {self.user.handle} deleted a post: {post.content[:30]}...")
+        
+    def update_profile(self, handle=None, bio=None):
+        """Update the user's profile."""
+        if handle:
+            self.user.handle = handle
+        if bio:
+            self.user.bio = bio
+            
+        self.logger.info(f"User profile updated: handle={self.user.handle}, bio={self.user.bio[:30]}...")
+
+    def notify_followers(self, post):
+        """
+        Notify all followers about a new post.
+        
+        Args:
+            post: The post to notify followers about.
+            
+        Returns:
+            Number of followers who unfollowed due to the post.
+        """
+        unfollowed_count = 0
+        
+        # Use a copy of the followers list to avoid modification during iteration
+        for follower in self.user._followers.copy():
+            # Use the follower controller to update the follower
+            if self.follower_controller.update_follower(follower, self.user, post):
+                # If the follower unfollowed, count it and remove them
+                unfollowed_count += 1
+                self.remove_follower(follower)
+            else:
+                self.logger.debug(f"Notified follower {follower.handle} about post")
+                
+        if unfollowed_count > 0:
+            self.logger.info(f"{unfollowed_count} followers unfollowed due to post")
+            
+        return unfollowed_count

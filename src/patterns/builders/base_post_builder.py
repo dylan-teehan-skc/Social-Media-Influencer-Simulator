@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from src.interfaces.post_builder import PostBuilder
+from src.patterns.interfaces.post_builder import PostBuilder
 from src.models.post import Post
 from src.services.logger_service import LoggerService
 
