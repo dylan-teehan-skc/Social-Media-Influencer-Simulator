@@ -92,6 +92,8 @@ class Post(QObject):
         self._sentiment = Sentiment.NEUTRAL  # Default sentiment
         self._followers_gained = 0
         self._followers_lost = 0
+        self._is_spam = False  # Default is not spam
+        self._is_valid = True  # Default is valid
         self.logger = LoggerService.get_logger()
 
         self.logger.debug(f"Post initialized with content: {content[:50]}..." if len(content) > 50 else content)
@@ -181,6 +183,16 @@ class Post(QObject):
     def is_spam(self, value):
         """Mark the post as spam or not."""
         self._is_spam = value
+        
+    @property
+    def is_valid(self):
+        """Check if the post is valid."""
+        return self._is_valid
+        
+    @is_valid.setter
+    def is_valid(self, value):
+        """Mark the post as valid or not."""
+        self._is_valid = value
         
     def _increment_likes(self):
         """Increment the like count. Should only be called by PostController."""
