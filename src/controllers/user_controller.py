@@ -5,6 +5,11 @@ from src.patterns.factory.post_builder_factory import PostBuilderFactory
 from src.services.logger_service import LoggerService
 from src.controllers.follower_controller import FollowerController
 from src.controllers.post_controller import PostController
+from src.patterns.interceptors.dispatcher import Dispatcher
+from src.patterns.interceptors.spam_filter import SpamFilter
+from src.patterns.interceptors.inappropriate_content_filter import InappropriateContentFilter
+from src.patterns.interceptors.post_creation_interceptor import PostCreationInterceptor
+from PyQt6.QtWidgets import QMessageBox
 
 class UserController:
     """Controller for User model operations."""
@@ -16,8 +21,24 @@ class UserController:
         self.follower_controller = FollowerController()
         self.post_controller = PostController()  # Make sure this is initialized
         
-    def create_post(self, content, image_path=None):
-        """Create a new post for the user."""
+        # Initialize the dispatcher and add interceptors
+        self.dispatcher = Dispatcher()
+        self.dispatcher.add_interceptor(PostCreationInterceptor())
+        self.dispatcher.add_interceptor(SpamFilter())
+        self.dispatcher.add_interceptor(InappropriateContentFilter())
+        
+    def create_post(self, content, image_path=None, parent_widget=None):
+        """
+        Create a new post for the user.
+        
+        Args:
+            content: The content of the post
+            image_path: Optional path to an image to include in the post
+            parent_widget: Optional parent widget for displaying warning dialogs
+            
+        Returns:
+            The created post, or None if creation failed
+        """
         # Use the factory to create the appropriate post builder
         factory = PostBuilderFactory()
         
@@ -37,35 +58,73 @@ class UserController:
         # Get the post from the builder
         post = builder.build()
         
-        # Analyze sentiment and set it on the post
-        sentiment = self.post_controller.analyze_sentiment(content)
-        post.sentiment = sentiment
+        # Store reference to dispatcher in post for warning collection
+        post._dispatcher = self.dispatcher
         
-        # Add the post to the user's posts
-        self.user._posts.append(post)
+        # Process the post through the interceptor chain
+        self.dispatcher.process_post(post)
         
-        # Emit the post_created signal
-        self.user.post_created.emit(post)
-        
-        # Log the post creation
-        self.logger.info(f"User {self.user.handle} created a post: {content[:30]}...")
-        
-        # Generate new followers based on the post
-        initial_follower_count = self.user._follower_count
-        new_followers = self.generate_new_followers(post)
-        
-        if new_followers > 0:
-            self.logger.info(f"Post attracted {new_followers} new followers")
+        # Check if there are any warnings
+        warnings = self.dispatcher.get_warnings()
+        if warnings and parent_widget:
+            # Display warnings to the user
+            warning_text = "\n\n".join(warnings)
             
-            # Use the controller's notify_followers method
-            self.notify_followers(post)
+            # Create a message box with the warnings
+            msg_box = QMessageBox(parent_widget)
+            msg_box.setIcon(QMessageBox.Icon.Warning)
+            msg_box.setWindowTitle("Post Warning")
+            msg_box.setText("Your post has the following issues:")
+            msg_box.setInformativeText(warning_text)
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+            msg_box.setDefaultButton(QMessageBox.StandardButton.Cancel)
             
-            # Add new followers as observers
-            for follower in self.user._followers[initial_follower_count:]:
-                self.user.attach(follower, post)
-                self.logger.debug(f"Added follower {follower.handle} as observer")
+            # Show the message box and get the user's response
+            response = msg_box.exec()
+            
+            # If the user clicked Cancel, abort post creation
+            if response == QMessageBox.StandardButton.Cancel:
+                self.logger.info("User cancelled post creation after seeing warnings")
+                return None
+                
+            # User clicked OK, proceed with post creation despite warnings
+            self.logger.info("User chose to proceed with post creation despite warnings")
         
-        return post
+        # Only proceed if the post is valid after interceptor processing
+        if not hasattr(post, 'is_valid') or post.is_valid:
+            # Analyze sentiment and set it on the post
+            sentiment = self.post_controller.analyze_sentiment(content)
+            post.sentiment = sentiment
+            
+            # Add the post to the user's posts
+            self.user._posts.append(post)
+            
+            # Emit the post_created signal
+            self.user.post_created.emit(post)
+            
+            # Log the post creation
+            self.logger.info(f"User {self.user.handle} created a post: {content[:30]}...")
+            
+            # Generate new followers based on the post
+            initial_follower_count = self.user._follower_count
+            new_followers = self.generate_new_followers(post)
+            
+            if new_followers > 0:
+                self.logger.info(f"Post attracted {new_followers} new followers")
+                
+                # Use the controller's notify_followers method
+                self.notify_followers(post)
+                
+                # Add new followers as observers
+                for follower in self.user._followers[initial_follower_count:]:
+                    self.user.attach(follower, post)
+                    self.logger.debug(f"Added follower {follower.handle} as observer")
+            
+            return post
+        else:
+            # Post was invalid, log the reason and return None
+            self.logger.warning(f"Post creation failed: Post validation failed")
+            return None
         
     def add_follower(self, follower, post=None):
         """Add a follower to the user."""

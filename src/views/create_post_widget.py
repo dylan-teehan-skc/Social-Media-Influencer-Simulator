@@ -59,9 +59,13 @@ class CreatePostWidget(QWidget):
         # Get the image path if an image was selected
         image_path = self.image_path if hasattr(self, 'image_path') else None
         
-        # Create the post using the user controller
-        post = self.user_controller.create_post(content, image_path)
+        # Create the post using the user controller, passing self as parent widget for warnings
+        post = self.user_controller.create_post(content, image_path, parent_widget=self)
         
+        # If post creation was cancelled or failed, return early
+        if not post:
+            return
+            
         # Clear the content edit and image preview
         self.content_edit.clear()
         if hasattr(self, 'image_preview'):
