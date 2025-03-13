@@ -5,6 +5,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
+from PyQt6.QtCore import QObject, pyqtSignal
 
 from src.services.logger_service import LoggerService
 
@@ -25,12 +26,36 @@ class Sentiment(Enum):
     NEUTRAL = "neutral"
 
 
-class Comment:
-    def __init__(self, content: str, sentiment: Sentiment, authorhandle: str):
-        self.content: str = content
-        self.sentiment: Sentiment = sentiment
-        self.timestamp: datetime = datetime.now()
-        self.author: str = authorhandle
+class Comment(QObject):
+    """Comment model representing a comment on a post."""
+    
+    def __init__(self, content, sentiment, author):
+        """Initialize a comment with content, sentiment, and author."""
+        super().__init__()
+        self._content = content
+        self._sentiment = sentiment
+        self._author = author
+        self._timestamp = datetime.now()
+        
+    @property
+    def content(self):
+        """Get the comment content."""
+        return self._content
+        
+    @property
+    def sentiment(self):
+        """Get the comment sentiment."""
+        return self._sentiment
+        
+    @property
+    def author(self):
+        """Get the comment author."""
+        return self._author
+        
+    @property
+    def timestamp(self):
+        """Get the comment timestamp."""
+        return self._timestamp
 
     def to_dict(self) -> dict:
         """Convert comment to dictionary format."""
@@ -43,143 +68,155 @@ class Comment:
 
 
 # pylint: disable=R0902
-class Post:
-    def __init__(self, content: str):
-        self.content: str = content
-        self.author = None
-        self.image_path = None
-        self.sentiment = None
-        self.comments = []
-        self.is_spam = False
-        self.timestamp = datetime.now()
-        self.likes: int = 0
-        self.shares: int = 0
-        self.followers_gained: int = 0
-        self.followers_lost: int = 0
+class Post(QObject):
+    """Post model representing a social media post."""
+    
+    # Signals
+    likes_changed = pyqtSignal(int)
+    shares_changed = pyqtSignal(int)
+    comments_changed = pyqtSignal(list)
+    sentiment_changed = pyqtSignal(object)
+    followers_gained_changed = pyqtSignal(int)
+    followers_lost_changed = pyqtSignal(int)
+    
+    def __init__(self, content, author=None, image_path=None):
+        """Initialize a post with content, author, and optional image path."""
+        super().__init__()
+        self._content = content
+        self._author = author
+        self._image_path = image_path
+        self._likes = 0
+        self._shares = 0
+        self._comments = []
+        self._timestamp = datetime.now()
+        self._sentiment = Sentiment.NEUTRAL  # Default sentiment
+        self._followers_gained = 0
+        self._followers_lost = 0
         self.logger = LoggerService.get_logger()
 
         self.logger.debug(f"Post initialized with content: {content[:50]}..." if len(content) > 50 else content)
 
-    def __new__(cls, *args, **kwargs):
-        raise RuntimeError("Posts can only be created through PostBuilderFactory")
-
-    @classmethod
-    def _create(cls, content: str) -> 'Post':
-        """Private constructor - posts should only be created through PostBuilderFactory"""
-        instance = super().__new__(cls)
-        # Set attributes directly instead of calling __init__
-        instance.content = content
-        instance.author = None
-        instance.image_path = None
-        instance.sentiment = None
-        instance.comments = []
-        instance.is_spam = False
-        instance.timestamp = datetime.now()
-        instance.likes = 0
-        instance.shares = 0
-        instance.followers_gained = 0
-        instance.followers_lost = 0
-        instance.logger = LoggerService.get_logger()
-        instance.logger.debug(f"Post initialized with content: {content[:50]}..." if len(content) > 50 else content)
-        return instance
-
-    def initial_impressions(self) -> None:
-        try:
-            if not GOOGLE_AI_AVAILABLE:
-                raise ImportError("Google AI package not available")
-
-            # Load environment variables from .env file
-            load_dotenv()
-            api_key = os.getenv("GOOGLE_API_KEY")
-
-            if not api_key:
-                raise ValueError("GOOGLE_API_KEY not found in environment variables")
-
-            # Try to use Google AI for sentiment analysis
-            sentiment = self._analyze_content(self.content)
-
-            # Convert result to Sentiment enum
-            if sentiment == "left":
-                self.sentiment = Sentiment.LEFT
-            elif sentiment == "right":
-                self.sentiment = Sentiment.RIGHT
-            else:
-                self.sentiment = Sentiment.NEUTRAL
-
-            self.logger.info(f"Post sentiment analyzed as {self.sentiment.name}")
-
-        except (ImportError, ValueError) as e:
-            self.logger.warning(
-                f"Using fallback sentiment analysis due to configuration error: {str(e)}")
-            self.sentiment = random.choice([Sentiment.LEFT, Sentiment.RIGHT, Sentiment.NEUTRAL])
-            self.logger.info(f"Post sentiment randomly assigned as {self.sentiment.name}")
-        except google_exceptions.GoogleAPIError as e:
-            self.logger.warning(
-                f"Using fallback sentiment analysis due to AI service error: {str(e)}")
-            self.sentiment = random.choice([Sentiment.LEFT, Sentiment.RIGHT, Sentiment.NEUTRAL])
-            self.logger.info(f"Post sentiment randomly assigned as {self.sentiment.name}")
-
-    def like(self) -> None:
-        self.likes += 1
-        self.logger.debug(f"Post liked, total likes: {self.likes}")
-
-    def unlike(self) -> None:
-        if self.likes > 0:
-            self.likes -= 1
-            self.logger.debug(f"Post unliked, total likes: {self.likes}")
-        else:
-            self.logger.warning("Attempted to unlike a post with 0 likes")
-
-    def share(self) -> None:
-        self.shares += 1
-        self.logger.debug(f"Post shared, total shares: {self.shares}")
-
-    def unshare(self) -> None:
-        if self.shares > 0:
-            self.shares -= 1
-            self.logger.debug(f"Post unshared, total shares: {self.shares}")
-        else:
-            self.logger.warning("Attempted to unshare a post with 0 shares")
-
-    def add_comment(self, comment: Comment) -> None:
-        self.comments.append(comment)
-        self.logger.debug(f"Comment added by {comment.author}: {comment.content[:30]}..." if len(comment.content) > 30 else comment.content)
-
-    def add_follower_gained(self):
-        self.followers_gained += 1
-        self.logger.debug(f"Follower gained, total gained: {self.followers_gained}")
-
-    def add_follower_lost(self):
-        self.followers_lost += 1
-        self.logger.debug(f"Follower lost, total lost: {self.followers_lost}")
-
-    def _analyze_content(self, content: str) -> str:
-        if not GOOGLE_AI_AVAILABLE:
-            raise ImportError("Google AI package not available")
-
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            raise ValueError("GOOGLE_API_KEY not found in environment variables")
-
-        prompt = f"""
-        Analyze the following text for political sentiment.
-        Respond with exactly one word - either 'left', 'right', or 'neutral':
-
-        Text: {content}
-        """
-
-        self.logger.debug("Sending content to Google AI for sentiment analysis")
-        client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt
-        )
-
-        sentiment = response.text.strip().lower()
-
-        # Validate the response
-        if sentiment not in ["left", "right", "neutral"]:
-            self.logger.warning(f"Unexpected API response: {sentiment}, defaulting to neutral")
-            return "neutral"
-
-        return sentiment
+    @property
+    def content(self):
+        """Get the post content."""
+        return self._content
+        
+    @content.setter
+    def content(self, value):
+        """Set the post content. Only used by builders."""
+        self._content = value
+        
+    @property
+    def author(self):
+        """Get the post author."""
+        return self._author
+        
+    @author.setter
+    def author(self, value):
+        """Set the post author. Only used by builders."""
+        self._author = value
+        
+    @property
+    def image_path(self):
+        """Get the post image path."""
+        return self._image_path
+        
+    @image_path.setter
+    def image_path(self, value):
+        """Set the post image path. Only used by builders."""
+        self._image_path = value
+        
+    @property
+    def timestamp(self):
+        """Get the post timestamp."""
+        return self._timestamp
+        
+    @property
+    def likes(self):
+        """Get the post likes."""
+        return self._likes
+        
+    @property
+    def shares(self):
+        """Get the post shares."""
+        return self._shares
+        
+    @property
+    def comments(self):
+        """Get the post comments."""
+        return self._comments.copy()
+        
+    @property
+    def sentiment(self):
+        """Get the post sentiment."""
+        return self._sentiment
+        
+    @sentiment.setter
+    def sentiment(self, value):
+        """Set the post sentiment."""
+        old_sentiment = self._sentiment
+        self._sentiment = value
+        
+        # Only emit if the sentiment actually changed
+        if old_sentiment != value:
+            self.sentiment_changed.emit(value)
+            self.logger.info(f"Post sentiment set to: {value.name}")
+            
+    @property
+    def followers_gained(self):
+        """Get the followers gained from this post."""
+        return self._followers_gained
+        
+    @property
+    def followers_lost(self):
+        """Get the followers lost from this post."""
+        return self._followers_lost
+        
+    @property
+    def is_spam(self):
+        """Check if the post is marked as spam."""
+        return self._is_spam
+        
+    @is_spam.setter
+    def is_spam(self, value):
+        """Mark the post as spam or not."""
+        self._is_spam = value
+        
+    def _increment_likes(self):
+        """Increment the like count. Should only be called by PostController."""
+        self._likes += 1
+        self.likes_changed.emit(self._likes)
+        
+    def _decrement_likes(self):
+        """Decrement the like count. Should only be called by PostController."""
+        if self._likes > 0:
+            self._likes -= 1
+            self.likes_changed.emit(self._likes)
+            
+    def _increment_shares(self):
+        """Increment the share count. Should only be called by PostController."""
+        self._shares += 1
+        self.shares_changed.emit(self._shares)
+        
+    def _decrement_shares(self):
+        """Decrement the share count. Should only be called by PostController."""
+        if self._shares > 0:
+            self._shares -= 1
+            self.shares_changed.emit(self._shares)
+            
+    def _add_comment(self, comment):
+        """Add a comment to the post. Should only be called by PostController."""
+        self._comments.append(comment)
+        self.comments_changed.emit(self._comments.copy())
+        
+    def _add_follower_lost(self):
+        """Increment the followers lost count."""
+        self._followers_lost += 1
+        self.followers_lost_changed.emit(self._followers_lost)
+        self.logger.debug(f"Follower lost. Total followers lost: {self._followers_lost}")
+        
+    def _add_follower_gained(self):
+        """Increment the followers gained count."""
+        self._followers_gained += 1
+        self.followers_gained_changed.emit(self._followers_gained)
+        self.logger.debug(f"Follower gained. Total followers gained: {self._followers_gained}")
