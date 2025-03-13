@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from src.builders.base_post_builder import BasePostBuilder
+from src.patterns.builders.base_post_builder import BasePostBuilder
 from src.models.post import Post
 from src.services.logger_service import LoggerService
 

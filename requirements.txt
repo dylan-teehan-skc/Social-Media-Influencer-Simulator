@@ -1,8 +1,10 @@
+PyQt6==6.5.0
+python-dotenv==1.0.0
+google-generativeai>=0.3.0
+typing-extensions>=4.5.0
 pytest
 python-dotenv>=1.0.0
-google-generativeai>=0.3.0
 google-api-core>=2.15.0
-pygame>=2.5.0
 pillow
 
 # Linting tools

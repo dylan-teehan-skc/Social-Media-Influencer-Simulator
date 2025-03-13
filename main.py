@@ -1,24 +1,19 @@
-from lib_config.config_loader import ConfigLoader
-from src.services.logger import setup_logger
-from src.services.logger_service import LoggerService
-import logging
-from src.mediator.mediator import Mediator
-from frontend.ui_logic import UILogic
+import sys
+from PyQt6.QtWidgets import QApplication
+from src.controllers.main_controller import MainController
 
 def main():
-    config = ConfigLoader()
-    logger = setup_logger(
-        name=config.get('app.name'),
-        config=config.get('logging')
-    )
+    """Main entry point for the application."""
+    app = QApplication(sys.argv)
     
-    LoggerService.set_logger(logger)
-    logger.setLevel(logging.DEBUG)
-
-    logger.info("Starting the application")
-    mediator = Mediator()
-    ui_logic = UILogic(mediator)
-    ui_logic.run()
+    # Create the main controller
+    main_controller = MainController()
+    
+    # Show the main window
+    main_controller.main_window.show()
+    
+    # Start the application event loop
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main() 
