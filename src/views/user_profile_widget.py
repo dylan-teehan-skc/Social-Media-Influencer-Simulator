@@ -17,6 +17,25 @@ class UserProfileWidget(QWidget):
         """Set the user controller."""
         self.user_controller = controller
         
+    def update_user(self, user):
+        """Update the widget with a new user object."""
+        self.user = user
+        
+        # Update the displayed handle
+        if hasattr(self.user, 'get_handle'):
+            self.handle_edit.setText(self.user.get_handle())
+        else:
+            self.handle_edit.setText(self.user.handle)
+            
+        # Update the displayed bio
+        if hasattr(self.user, 'get_bio'):
+            self.bio_edit.setText(self.user.get_bio())
+        else:
+            self.bio_edit.setText(self.user.bio)
+            
+        # Update the follower count display
+        self.update_follower_count()
+        
     def init_ui(self):
         layout = QVBoxLayout()
         
@@ -69,5 +88,11 @@ class UserProfileWidget(QWidget):
             QMessageBox.warning(self, "Error", "User controller not set!")
         
     def update_follower_count(self):
-        if self.user:
-            self.follower_count.setText(str(self.user.follower_count)) 
+        """Update the follower count display."""
+        if hasattr(self, 'follower_count') and self.user:
+            count = self.user.follower_count
+            self.follower_count.setText(f"Followers: {count}")
+            
+            # Add visual indicator if verified
+            if hasattr(self.user, 'get_handle') and '✔️' in self.user.get_handle():
+                self.follower_count.setText(f"{count} (Verified Account)") 
