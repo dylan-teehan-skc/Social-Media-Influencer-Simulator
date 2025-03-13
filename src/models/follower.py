@@ -1,8 +1,8 @@
 from PyQt6.QtCore import QObject, pyqtSignal
 from random import randint
 
+from src.patterns.command.command_history import CommandHistory
 from src.patterns.command.post_commands import (
-    CommandHistory,
     CommentCommand,
     LikeCommand,
     ShareCommand,

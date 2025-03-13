@@ -62,20 +62,3 @@ class ShareCommand(Command):
         self.post._decrement_shares()
         author_info = f"@{self.post.author.handle}" if self.post.author else "(no author)"
         self.logger.info(f"Undid: Follower '{self.follower_handle}' shared post by {author_info}")
-
-
-class CommandHistory:
-
-    def __init__(self):
-        self.history = []
-        self.logger = LoggerService.get_logger()
-
-    def push(self, command: Command) -> None:
-        """Add a command to the history after execution."""
-        self.history.append(command)
-        self.logger.debug(f"Command added to history, total commands: {len(self.history)}")
-
-    def clear(self) -> None:
-        """Clear the command history."""
-        self.history.clear()
-        self.logger.debug("Command history cleared")

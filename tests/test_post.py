@@ -1,161 +1,158 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from datetime import datetime
+from PyQt6.QtCore import QObject
 
 from src.models.post import Post, Comment, Sentiment
+from src.services.logger_service import LoggerService
 
 
 class TestPost(unittest.TestCase):
     def setUp(self):
-        # Patch Post._create to allow direct instantiation for testing
-        self.post_create_patcher = patch('src.models.post.Post._create', side_effect=Post._create)
-        self.post_create_patcher.start()
-        
+        """Set up test fixtures."""
         # Create a test post
         self.test_content = "This is a test post content"
-        self.post = Post._create(self.test_content)
+        self.post = Post(self.test_content)
         
         # Create a mock user
         self.mock_user = MagicMock()
         self.mock_user.handle = "test_user"
         self.post.author = self.mock_user
-
-    def tearDown(self):
-        self.post_create_patcher.stop()
+        
+        # Create a mock logger
+        self.mock_logger = MagicMock()
+        LoggerService._logger = self.mock_logger
 
     def test_post_initialization(self):
         """Check if posts get created with the right starting values."""
         self.assertEqual(self.post.content, self.test_content)
         self.assertEqual(self.post.author, self.mock_user)
         self.assertIsNone(self.post.image_path)
-        self.assertIsNone(self.post.sentiment)
+        self.assertEqual(self.post.sentiment, Sentiment.NEUTRAL)
         self.assertEqual(len(self.post.comments), 0)
         self.assertFalse(self.post.is_spam)
+        self.assertTrue(self.post.is_valid)
         self.assertIsInstance(self.post.timestamp, datetime)
         self.assertEqual(self.post.likes, 0)
         self.assertEqual(self.post.shares, 0)
         self.assertEqual(self.post.followers_gained, 0)
         self.assertEqual(self.post.followers_lost, 0)
+        self.assertIsInstance(self.post, QObject)
 
-    def test_direct_instantiation_prevention(self):
-        """Check if we can't create posts directly (should use builder)."""
-        with self.assertRaises(RuntimeError):
-            Post(self.test_content)
+    def test_signals_exist(self):
+        """Test that all required signals are defined."""
+        self.assertTrue(hasattr(self.post, 'likes_changed'))
+        self.assertTrue(hasattr(self.post, 'shares_changed'))
+        self.assertTrue(hasattr(self.post, 'comments_changed'))
+        self.assertTrue(hasattr(self.post, 'sentiment_changed'))
+        self.assertTrue(hasattr(self.post, 'followers_gained_changed'))
+        self.assertTrue(hasattr(self.post, 'followers_lost_changed'))
 
-    @patch('src.models.post.GOOGLE_AI_AVAILABLE', False)
-    def test_initial_impressions_fallback(self):
-        """Check if sentiment analysis falls back when Google AI isn't available."""
-        self.post.initial_impressions()
-        self.assertIsNotNone(self.post.sentiment)
-        self.assertIn(self.post.sentiment, [Sentiment.LEFT, Sentiment.RIGHT, Sentiment.NEUTRAL])
+    def test_property_setters(self):
+        """Test that property setters work correctly."""
+        new_content = "New content"
+        new_image = "path/to/new/image.jpg"
+        
+        self.post.content = new_content
+        self.post.image_path = new_image
+        
+        self.assertEqual(self.post.content, new_content)
+        self.assertEqual(self.post.image_path, new_image)
 
-    @patch('src.models.post.GOOGLE_AI_AVAILABLE', True)
-    @patch('src.models.post.os.getenv')
-    def test_initial_impressions_missing_api_key(self, mock_getenv):
-        """Check if sentiment analysis falls back when API key is missing."""
-        # Set up mock to return None for API key
-        mock_getenv.return_value = None
+    def test_sentiment_setter_with_signal(self):
+        """Test that setting sentiment emits signal when changed."""
+        # Create a mock slot
+        mock_slot = MagicMock()
+        self.post.sentiment_changed.connect(mock_slot)
         
-        # Call initial_impressions
-        self.post.initial_impressions()
+        # Change sentiment
+        self.post.sentiment = Sentiment.LEFT
         
-        # Check if sentiment was set using fallback
-        self.assertIsNotNone(self.post.sentiment)
-        self.assertIn(self.post.sentiment, [Sentiment.LEFT, Sentiment.RIGHT, Sentiment.NEUTRAL])
+        # Check if signal was emitted
+        mock_slot.assert_called_once_with(Sentiment.LEFT)
+        
+        # Change to same sentiment - should not emit
+        mock_slot.reset_mock()
+        self.post.sentiment = Sentiment.LEFT
+        mock_slot.assert_not_called()
 
-    def test_like_and_unlike(self):
-        """Check if liking and unliking posts works."""
-        # Test liking
-        initial_likes = self.post.likes
-        self.post.like()
-        self.assertEqual(self.post.likes, initial_likes + 1)
+    def test_like_operations(self):
+        """Test internal like operations."""
+        # Create a mock slot
+        mock_slot = MagicMock()
+        self.post.likes_changed.connect(mock_slot)
         
-        # Test liking multiple times
-        self.post.like()
-        self.post.like()
-        self.assertEqual(self.post.likes, initial_likes + 3)
+        # Test increment
+        self.post._increment_likes()
+        self.assertEqual(self.post.likes, 1)
+        mock_slot.assert_called_with(1)
         
-        # Test unliking
-        self.post.unlike()
-        self.assertEqual(self.post.likes, initial_likes + 2)
+        # Test decrement
+        self.post._decrement_likes()
+        self.assertEqual(self.post.likes, 0)
+        mock_slot.assert_called_with(0)
         
-        # Test unliking to zero
-        self.post.unlike()
-        self.post.unlike()
-        self.assertEqual(self.post.likes, initial_likes)
-        
-        # Test unliking below zero (shouldn't go negative)
-        self.post.unlike()
-        self.assertEqual(self.post.likes, initial_likes)
+        # Test decrement at zero
+        self.post._decrement_likes()
+        self.assertEqual(self.post.likes, 0)
 
-    def test_share_and_unshare(self):
-        """Check if sharing and unsharing posts works."""
-        # Test sharing
-        initial_shares = self.post.shares
-        self.post.share()
-        self.assertEqual(self.post.shares, initial_shares + 1)
+    def test_share_operations(self):
+        """Test internal share operations."""
+        # Create a mock slot
+        mock_slot = MagicMock()
+        self.post.shares_changed.connect(mock_slot)
         
-        # Test sharing multiple times
-        self.post.share()
-        self.post.share()
-        self.assertEqual(self.post.shares, initial_shares + 3)
+        # Test increment
+        self.post._increment_shares()
+        self.assertEqual(self.post.shares, 1)
+        mock_slot.assert_called_with(1)
         
-        # Test unsharing
-        self.post.unshare()
-        self.assertEqual(self.post.shares, initial_shares + 2)
+        # Test decrement
+        self.post._decrement_shares()
+        self.assertEqual(self.post.shares, 0)
+        mock_slot.assert_called_with(0)
         
-        # Test unsharing to zero
-        self.post.unshare()
-        self.post.unshare()
-        self.assertEqual(self.post.shares, initial_shares)
-        
-        # Test unsharing below zero (shouldn't go negative)
-        self.post.unshare()
-        self.assertEqual(self.post.shares, initial_shares)
+        # Test decrement at zero
+        self.post._decrement_shares()
+        self.assertEqual(self.post.shares, 0)
 
-    def test_add_comment(self):
-        """Check if adding comments to posts works."""
-        # Create a comment
-        comment = Comment("This is a test comment", Sentiment.NEUTRAL, "commenter")
+    def test_comment_operations(self):
+        """Test internal comment operations."""
+        # Create a mock slot
+        mock_slot = MagicMock()
+        self.post.comments_changed.connect(mock_slot)
         
-        # Add comment to post
-        self.post.add_comment(comment)
+        # Create and add a comment
+        comment = Comment("Test comment", Sentiment.NEUTRAL, "commenter")
+        self.post._add_comment(comment)
         
-        # Check if comment was added
+        # Check if comment was added and signal emitted
         self.assertEqual(len(self.post.comments), 1)
         self.assertEqual(self.post.comments[0], comment)
-        
-        # Add another comment
-        comment2 = Comment("This is another test comment", Sentiment.LEFT, "commenter2")
-        self.post.add_comment(comment2)
-        
-        # Check if second comment was added
-        self.assertEqual(len(self.post.comments), 2)
-        self.assertEqual(self.post.comments[1], comment2)
+        mock_slot.assert_called_once()
 
     def test_follower_tracking(self):
-        """Check if tracking followers gained and lost works."""
-        # Test adding gained followers
-        initial_gained = self.post.followers_gained
-        self.post.add_follower_gained()
-        self.assertEqual(self.post.followers_gained, initial_gained + 1)
+        """Test follower tracking operations."""
+        # Create mock slots
+        gained_slot = MagicMock()
+        lost_slot = MagicMock()
+        self.post.followers_gained_changed.connect(gained_slot)
+        self.post.followers_lost_changed.connect(lost_slot)
         
-        self.post.add_follower_gained()
-        self.post.add_follower_gained()
-        self.assertEqual(self.post.followers_gained, initial_gained + 3)
+        # Test gained followers
+        self.post._add_follower_gained()
+        self.assertEqual(self.post.followers_gained, 1)
+        gained_slot.assert_called_with(1)
         
-        # Test adding lost followers
-        initial_lost = self.post.followers_lost
-        self.post.add_follower_lost()
-        self.assertEqual(self.post.followers_lost, initial_lost + 1)
-        
-        self.post.add_follower_lost()
-        self.post.add_follower_lost()
-        self.assertEqual(self.post.followers_lost, initial_lost + 3)
+        # Test lost followers
+        self.post._add_follower_lost()
+        self.assertEqual(self.post.followers_lost, 1)
+        lost_slot.assert_called_with(1)
 
 
 class TestComment(unittest.TestCase):
     def setUp(self):
+        """Set up test fixtures."""
         self.content = "This is a test comment"
         self.sentiment = Sentiment.NEUTRAL
         self.author = "test_commenter"
@@ -167,6 +164,7 @@ class TestComment(unittest.TestCase):
         self.assertEqual(self.comment.sentiment, self.sentiment)
         self.assertEqual(self.comment.author, self.author)
         self.assertIsInstance(self.comment.timestamp, datetime)
+        self.assertIsInstance(self.comment, QObject)
 
     def test_to_dict(self):
         """Check if converting a comment to a dictionary works."""

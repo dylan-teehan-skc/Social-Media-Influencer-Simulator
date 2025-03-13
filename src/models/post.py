@@ -221,6 +221,12 @@ class Post(QObject):
         self._comments.append(comment)
         self.comments_changed.emit(self._comments.copy())
         
+    def _remove_comment(self, comment):
+        """Remove a comment from the post. Should only be called by PostController."""
+        if comment in self._comments:
+            self._comments.remove(comment)
+            self.comments_changed.emit(self._comments.copy())
+        
     def _add_follower_lost(self):
         """Increment the followers lost count."""
         self._followers_lost += 1
@@ -232,3 +238,8 @@ class Post(QObject):
         self._followers_gained += 1
         self.followers_gained_changed.emit(self._followers_gained)
         self.logger.debug(f"Follower gained. Total followers gained: {self._followers_gained}")
+
+    @classmethod
+    def _create(cls, content: str):
+        """Create a new post with content. Only used by builders."""
+        return cls(content)

@@ -1,19 +1,26 @@
 import unittest
 from unittest.mock import MagicMock
 
-from src.command.post_commands import (
+from src.patterns.command.command_history import CommandHistory
+from src.patterns.command.post_commands import (
     LikeCommand,
     ShareCommand,
-    CommentCommand,
-    CommandHistory
+    CommentCommand
 )
 from src.models.post import Post, Comment, Sentiment
+from src.services.logger_service import LoggerService
 
 
 class TestPostCommands(unittest.TestCase):
     def setUp(self):
+        """Set up test fixtures."""
+        # Create a mock logger first
+        self.mock_logger = MagicMock()
+        LoggerService._logger = self.mock_logger
+        
         # Create a mock post
         self.mock_post = MagicMock(spec=Post)
+        
         # Add author attribute to the mock post
         mock_author = MagicMock()
         mock_author.handle = "test_author"
@@ -36,15 +43,16 @@ class TestPostCommands(unittest.TestCase):
         # Execute the command
         like_command.execute()
         
-        # Check if post.like was called
-        self.mock_post.like.assert_called_once()
+        # Check if post._increment_likes was called
+        self.mock_post._increment_likes.assert_called_once()
         
-        # Check if undo is implemented
-        if hasattr(like_command, 'undo'):
-            # Undo the command
-            like_command.undo()
-            # Check if post.unlike was called
-            self.mock_post.unlike.assert_called_once()
+        # Check if logging occurred
+        self.mock_logger.info.assert_called_with("Follower 'liker' liked post by @test_author")
+        
+        # Test undo
+        like_command.undo()
+        self.mock_post._decrement_likes.assert_called_once()
+        self.mock_logger.info.assert_called_with("Undid: Follower 'liker' liked post by @test_author")
 
     def test_share_command(self):
         """Check if the share command works."""
@@ -54,15 +62,16 @@ class TestPostCommands(unittest.TestCase):
         # Execute the command
         share_command.execute()
         
-        # Check if post.share was called
-        self.mock_post.share.assert_called_once()
+        # Check if post._increment_shares was called
+        self.mock_post._increment_shares.assert_called_once()
         
-        # Check if undo is implemented
-        if hasattr(share_command, 'undo'):
-            # Undo the command
-            share_command.undo()
-            # Check if post.unshare was called
-            self.mock_post.unshare.assert_called_once()
+        # Check if logging occurred
+        self.mock_logger.info.assert_called_with("Follower 'sharer' shared post by @test_author")
+        
+        # Test undo
+        share_command.undo()
+        self.mock_post._decrement_shares.assert_called_once()
+        self.mock_logger.info.assert_called_with("Undid: Follower 'sharer' shared post by @test_author")
 
     def test_comment_command(self):
         """Check if the comment command works."""
@@ -72,18 +81,18 @@ class TestPostCommands(unittest.TestCase):
         # Execute the command
         comment_command.execute()
         
-        # Check if post.add_comment was called with the right comment
-        self.mock_post.add_comment.assert_called_once_with(self.test_comment)
+        # Check if post._add_comment was called with the right comment
+        self.mock_post._add_comment.assert_called_once_with(self.test_comment)
         
-        # Check if undo is implemented
-        if hasattr(comment_command, 'undo'):
-            # Add the comment to the mock post's comments list to simulate the effect of execute
-            self.mock_post.comments.append(self.test_comment)
-            # Undo the command
-            comment_command.undo()
-            # Check if the comment was removed (if undo is implemented to remove comments)
-            if len(self.mock_post.comments) == 0:
-                self.assertEqual(len(self.mock_post.comments), 0)
+        # Check if logging occurred
+        self.mock_logger.info.assert_called_with("Follower 'commenter' commented on post by @test_author")
+        
+        # Test undo
+        # Add the comment to mock post's comments for undo test
+        self.mock_post.comments.append(self.test_comment)
+        comment_command.undo()
+        self.mock_post._remove_comment.assert_called_once_with(self.test_comment)
+        self.mock_logger.info.assert_called_with("Undid: Follower 'commenter' commented on post by @test_author")
 
     def test_command_history(self):
         """Check if the command history works."""
@@ -97,94 +106,18 @@ class TestPostCommands(unittest.TestCase):
         self.command_history.push(share_command)
         self.command_history.push(comment_command)
         
-        # Check if pop method exists
-        if hasattr(self.command_history, 'pop'):
-            # Pop a command
-            popped_command = self.command_history.pop()
-            
-            # Check if we got the right command back (last in, first out)
-            self.assertEqual(popped_command, comment_command)
-            
-            # Pop another command
-            popped_command = self.command_history.pop()
-            
-            # Check if we got the right command back
-            self.assertEqual(popped_command, share_command)
-            
-            # Pop the last command
-            popped_command = self.command_history.pop()
-            
-            # Check if we got the right command back
-            self.assertEqual(popped_command, like_command)
-            
-            # Pop from empty history
-            popped_command = self.command_history.pop()
-            
-            # Check if we get None when empty
-            self.assertIsNone(popped_command)
-        else:
-            # Skip this part of the test if pop is not implemented
-            pass
-
-    def test_command_history_undo(self):
-        """Check if we can undo commands from history."""
-        # Skip this test if undo is not implemented in CommandHistory
-        if not hasattr(self.command_history, 'undo'):
-            return
-            
-        # Create some commands
-        like_command = LikeCommand(self.mock_post, "liker")
-        share_command = ShareCommand(self.mock_post, "sharer")
+        # Check if logging occurred
+        expected_debug_calls = [
+            unittest.mock.call("Command added to history, total commands: 1"),
+            unittest.mock.call("Command added to history, total commands: 2"),
+            unittest.mock.call("Command added to history, total commands: 3")
+        ]
+        self.mock_logger.debug.assert_has_calls(expected_debug_calls)
         
-        # Execute and push commands to history
-        like_command.execute()
-        self.command_history.push(like_command)
-        
-        share_command.execute()
-        self.command_history.push(share_command)
-        
-        # Reset mock to clear call history
-        self.mock_post.reset_mock()
-        # Ensure author is still set after reset
-        mock_author = MagicMock()
-        mock_author.handle = "test_author"
-        self.mock_post.author = mock_author
-        self.mock_post.comments = []
-        
-        # Undo last command
-        self.command_history.undo()
-        
-        # Check if share command was undone
-        self.mock_post.unshare.assert_called_once()
-        self.mock_post.unlike.assert_not_called()
-        
-        # Reset mock again
-        self.mock_post.reset_mock()
-        # Ensure author is still set after reset
-        mock_author = MagicMock()
-        mock_author.handle = "test_author"
-        self.mock_post.author = mock_author
-        self.mock_post.comments = []
-        
-        # Undo first command
-        self.command_history.undo()
-        
-        # Check if like command was undone
-        self.mock_post.unlike.assert_called_once()
-        
-        # Try to undo when history is empty
-        self.mock_post.reset_mock()
-        # Ensure author is still set after reset
-        mock_author = MagicMock()
-        mock_author.handle = "test_author"
-        self.mock_post.author = mock_author
-        self.mock_post.comments = []
-        
-        self.command_history.undo()
-        
-        # Check if nothing happens when history is empty
-        self.mock_post.unlike.assert_not_called()
-        self.mock_post.unshare.assert_not_called()
+        # Test clear
+        self.command_history.clear()
+        self.assertEqual(len(self.command_history.history), 0)
+        self.mock_logger.debug.assert_called_with("Command history cleared")
 
 
 if __name__ == '__main__':

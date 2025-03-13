@@ -1,4 +1,5 @@
-from src.models.post import Post
+from src.patterns.builders.text_post_builder import TextPostBuilder
+from src.patterns.builders.image_post_builder import ImagePostBuilder
 from src.services.logger_service import LoggerService
 
 

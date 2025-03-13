@@ -1,4 +1,4 @@
-from src.interfaces.user_decorator import UserDecorator
+from src.patterns.interfaces.user_decorator import UserDecorator
 
 
 class VerifiedUser(UserDecorator):
