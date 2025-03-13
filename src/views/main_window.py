@@ -30,6 +30,26 @@ class SocialMediaMainWindow(QMainWindow):
         self.feed_widget.set_post_controller(controller)
         self.create_post_widget.set_post_controller(controller)
         
+    def update_user_profile(self):
+        """Update the UI to reflect changes in the user object."""
+        # Update the user reference in the profile widget
+        if hasattr(self, 'profile_widget'):
+            self.profile_widget.update_user(self.user_controller.user)
+            
+        # Update window title to show verification status
+        if hasattr(self.user_controller.user, 'get_handle'):
+            self.setWindowTitle(f"Social Media Simulator - {self.user_controller.user.get_handle()}")
+        else:
+            self.setWindowTitle(f"Social Media Simulator - {self.user_controller.user.handle}")
+            
+        # Refresh the feed to show updated posts with verified status
+        if hasattr(self, 'feed_widget'):
+            self.feed_widget.update_feed()
+        
+        # Refresh follower list to show updated user handle
+        if hasattr(self, 'followers_widget'):
+            self.followers_widget.update_followers()
+        
     def init_ui(self):
         self.setWindowTitle("Social Media Simulator")
         self.setGeometry(100, 100, 800, 600)

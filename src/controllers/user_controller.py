@@ -9,6 +9,7 @@ from src.patterns.interceptors.dispatcher import Dispatcher
 from src.patterns.interceptors.spam_filter import SpamFilter
 from src.patterns.interceptors.inappropriate_content_filter import InappropriateContentFilter
 from src.patterns.interceptors.post_creation_interceptor import PostCreationInterceptor
+from src.patterns.decorator.verified_user import VerifiedUser
 from PyQt6.QtWidgets import QMessageBox
 
 class UserController:
@@ -142,6 +143,33 @@ class UserController:
                 
             # Log the follower addition
             self.logger.info(f"User {self.user.handle} gained a follower: {follower.handle}")
+            
+            # Check if the user has reached the verification threshold
+            if self.user._follower_count >= self.user.VERIFICATION_THRESHOLD and not isinstance(self.user, VerifiedUser):
+                # Apply the VerifiedUser decorator
+                self.logger.info(f"User {self.user.handle} has reached {self.user.VERIFICATION_THRESHOLD} followers. Applying verified status.")
+                self.user = VerifiedUser(self.user)
+                
+                # Log the verification
+                self.logger.info(f"User {self.user.handle} is now verified!")
+                
+                # Show verification popup
+                msg_box = QMessageBox()
+                msg_box.setIcon(QMessageBox.Icon.Information)
+                msg_box.setWindowTitle("Account Verified!")
+                msg_box.setText(f"Congratulations! Your account has been verified!")
+                msg_box.setInformativeText(f"You've reached {self.user.VERIFICATION_THRESHOLD} followers and are now a verified user. Your handle will now show a verification badge (✔️).")
+                msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+                msg_box.exec()
+                
+                # Update the main controller's reference to the user
+                from src.controllers.main_controller import MainController
+                main_controller = MainController.get_instance()
+                if main_controller:
+                    main_controller.user = self.user
+                    # Update the UI to reflect the verified status
+                    if hasattr(main_controller, 'main_window') and main_controller.main_window:
+                        main_controller.main_window.update_user_profile()
             
     def remove_follower(self, follower):
         """Remove a follower from the user."""

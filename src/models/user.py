@@ -27,6 +27,9 @@ class User(QObject):
     MAX_FOLLOWER_MULTIPLIER = 3.0
     FOLLOWER_MULTIPLIER_SCALE = 1000
     
+    # Verification constants
+    VERIFICATION_THRESHOLD = 40  # Number of followers needed for verification
+    
     def __init__(self, handle, bio):
         """Initialize a user with handle and bio."""
         super().__init__()
