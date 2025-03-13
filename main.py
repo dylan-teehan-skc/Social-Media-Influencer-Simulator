@@ -1,7 +1,5 @@
 import sys
 from PyQt6.QtWidgets import QApplication
-
-# Import the main controller
 from src.controllers.main_controller import MainController
 
 def main():

@@ -2,7 +2,6 @@ from src.patterns.factory.post_builder_factory import PostBuilderFactory
 from src.patterns.interfaces.observer import Observer
 from src.models.post import Comment, Post, Sentiment
 from src.services.logger_service import LoggerService
-import pygame
 from PyQt6.QtCore import QObject, pyqtSignal
 from datetime import datetime
 
