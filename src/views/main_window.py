@@ -9,6 +9,7 @@ from src.views.feed_widget import FeedWidget
 from src.views.follower_list_widget import FollowerListWidget
 from src.views.theme_switcher_widget import ThemeSwitcherWidget
 from src.views.style_manager import StyleManager
+from src.views.news_widget import NewsWidget
 
 class SocialMediaMainWindow(QMainWindow):
     """Main window for the social media application"""
@@ -29,6 +30,7 @@ class SocialMediaMainWindow(QMainWindow):
         self.user_controller = controller
         self.profile_widget.set_user_controller(controller)
         self.create_post_widget.set_user_controller(controller)
+        self.news_widget.set_user_controller(controller)
         
     def set_post_controller(self, controller):
         """Set the post controller and pass it to child widgets."""
@@ -55,6 +57,10 @@ class SocialMediaMainWindow(QMainWindow):
         # Refresh follower list to show updated user handle
         if hasattr(self, 'followers_widget'):
             self.followers_widget.update_followers()
+            
+        # Update the news widget with the current user
+        if hasattr(self, 'news_widget'):
+            self.news_widget.update_user(self.user_controller.user)
         
     def init_ui(self):
         self.setWindowTitle("Social Media Simulator")
@@ -94,10 +100,18 @@ class SocialMediaMainWindow(QMainWindow):
         followers_layout.addWidget(self.followers_widget)
         followers_tab.setLayout(followers_layout)
         
+        # News tab
+        news_tab = QWidget()
+        news_layout = QVBoxLayout()
+        self.news_widget = NewsWidget(self.user)
+        news_layout.addWidget(self.news_widget)
+        news_tab.setLayout(news_layout)
+        
         # Add tabs to tab widget
         tabs.addTab(profile_tab, "Profile")
         tabs.addTab(feed_tab, "Feed")
         tabs.addTab(followers_tab, "Followers")
+        tabs.addTab(news_tab, "News")
         
         # Connect signals
         if self.user:
