@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QTabWidget
+    QMainWindow, QWidget, QVBoxLayout, QTabWidget, QHBoxLayout
 )
 from PyQt6.QtCore import pyqtSlot
 
@@ -7,6 +7,8 @@ from src.views.user_profile_widget import UserProfileWidget
 from src.views.create_post_widget import CreatePostWidget
 from src.views.feed_widget import FeedWidget
 from src.views.follower_list_widget import FollowerListWidget
+from src.views.theme_switcher_widget import ThemeSwitcherWidget
+from src.views.style_manager import StyleManager
 
 class SocialMediaMainWindow(QMainWindow):
     """Main window for the social media application"""
@@ -16,6 +18,10 @@ class SocialMediaMainWindow(QMainWindow):
         self.user = user
         self.user_controller = None
         self.post_controller = None
+        
+        # Initialize theme manager
+        self.theme_manager = StyleManager.get_instance()
+        
         self.init_ui()
         
     def set_user_controller(self, controller):
@@ -57,6 +63,10 @@ class SocialMediaMainWindow(QMainWindow):
         # Create central widget and main layout
         central_widget = QWidget()
         main_layout = QVBoxLayout()
+        
+        # Add theme switcher at the top
+        self.theme_switcher = ThemeSwitcherWidget()
+        main_layout.addWidget(self.theme_switcher)
         
         # Create tab widget
         tabs = QTabWidget()
@@ -101,6 +111,9 @@ class SocialMediaMainWindow(QMainWindow):
         # Set central widget
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
+        
+        # Apply initial theme
+        self.theme_manager.set_theme("light")
         
     @pyqtSlot(object)
     def on_post_created(self, post):

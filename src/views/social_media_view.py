@@ -8,6 +8,7 @@ from src.views.post_widget import PostWidget
 from src.views.create_post_widget import CreatePostWidget
 from src.views.feed_widget import FeedWidget
 from src.views.follower_list_widget import FollowerListWidget
+from src.views.theme_switcher_widget import ThemeSwitcherWidget
 
 # Re-export the classes
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     'PostWidget',
     'CreatePostWidget',
     'FeedWidget',
-    'FollowerListWidget'
+    'FollowerListWidget',
+    'ThemeSwitcherWidget'
 ] 

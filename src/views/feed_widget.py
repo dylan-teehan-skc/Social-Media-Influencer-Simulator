@@ -11,7 +11,6 @@ class FeedWidget(QWidget):
         self.user = user
         self.post_controller = None
         self.post_widgets = []
-        self.show_trending = False
         self.init_ui()
         
     def set_post_controller(self, controller):
@@ -30,16 +29,6 @@ class FeedWidget(QWidget):
         feed_label.setStyleSheet("font-size: 16px; font-weight: bold;")
         controls_layout.addWidget(feed_label)
         
-        # Toggle button for trending/regular feed
-        self.toggle_button = QPushButton("Show Trending")
-        self.toggle_button.clicked.connect(self.toggle_feed_type)
-        controls_layout.addWidget(self.toggle_button)
-        
-        # Refresh button
-        refresh_button = QPushButton("Refresh")
-        refresh_button.clicked.connect(self.update_feed)
-        controls_layout.addWidget(refresh_button)
-        
         layout.addLayout(controls_layout)
         
         # Feed scroll area
@@ -55,15 +44,6 @@ class FeedWidget(QWidget):
         
         self.setLayout(layout)
     
-    def toggle_feed_type(self):
-        """Toggle between regular and trending feed."""
-        self.show_trending = not self.show_trending
-        if self.show_trending:
-            self.toggle_button.setText("Show Regular Feed")
-        else:
-            self.toggle_button.setText("Show Trending")
-        self.update_feed()
-        
     def update_feed(self):
         """Update the feed with the latest posts."""
         # Clear existing posts
@@ -77,10 +57,8 @@ class FeedWidget(QWidget):
         if not self.post_controller:
             return
             
-        # Get posts based on feed type
-        if self.show_trending and self.post_controller:
-            posts = self.post_controller.get_trending_posts(limit=10)
-        elif self.user:
+        # Get user posts
+        if self.user:
             posts = reversed(self.user.posts)
         else:
             posts = []

@@ -3,8 +3,11 @@ from PyQt6.QtWidgets import (
     QPushButton, QTextEdit, QFrame, QDialog, QScrollArea
 )
 from PyQt6.QtCore import Qt, pyqtSlot
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QPainter, QPen, QColor, QPainterPath, QBrush
 from src.models.post import Sentiment
+from src.views.style_manager import StyleManager
+from src.views.user_profile_widget import get_base_profile_picture_path, create_circular_pixmap
+import os
 
 class PostWidget(QWidget):
     """Widget to display a single post"""
@@ -13,7 +16,11 @@ class PostWidget(QWidget):
         super().__init__(parent)
         self.post = post
         self.post_controller = None
+        self.theme_manager = StyleManager.get_instance()
         self.init_ui()
+        
+        # Connect to theme changes
+        self.theme_manager.theme_changed.connect(self.on_theme_changed)
         
     def set_post_controller(self, controller):
         """Set the post controller."""
@@ -21,26 +28,60 @@ class PostWidget(QWidget):
         
     def init_ui(self):
         layout = QVBoxLayout()
+        layout.setContentsMargins(5, 5, 5, 5)
         
         # Post frame
-        post_frame = QFrame()
-        post_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        post_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.post_frame = QFrame()
+        self.post_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.post_frame.setFrameShadow(QFrame.Shadow.Raised)
         post_layout = QVBoxLayout()
+        post_layout.setSpacing(10)  # Add more spacing between elements
+        post_layout.setContentsMargins(10, 10, 10, 10)  # Add padding inside the frame
         
         # Author and timestamp
         header_layout = QHBoxLayout()
+        header_layout.setSpacing(10)  # Add spacing between avatar and author info
+        
+        # Author profile picture
+        self.author_avatar = QLabel()
+        self.author_avatar.setFixedSize(40, 40)
+        self.author_avatar.setMinimumSize(40, 40)  # Ensure minimum size
+        
+        # Path to base profile picture
+        base_profile_path = get_base_profile_picture_path()
+        
+        # Load the profile picture
+        profile_pixmap = QPixmap()
+        if self.post and self.post.author and hasattr(self.post.author, 'profile_picture_path') and self.post.author.profile_picture_path:
+            profile_pixmap.load(self.post.author.profile_picture_path)
+            if profile_pixmap.isNull():  # If loading fails, use base picture
+                profile_pixmap.load(base_profile_path)
+        else:
+            # Use base profile picture
+            profile_pixmap.load(base_profile_path)
+        
+        # Create and set circular avatar
+        if not profile_pixmap.isNull():
+            circular_pixmap = create_circular_pixmap(profile_pixmap, size=40, border_size=2)
+            self.author_avatar.setPixmap(circular_pixmap)
+        
+        header_layout.addWidget(self.author_avatar)
+        
+        # Author info layout (name and timestamp)
+        author_info_layout = QVBoxLayout()
+        author_info_layout.setSpacing(2)  # Reduce spacing between handle and timestamp
+        
         self.author_label = QLabel(f"@{self.post.author.handle}" if self.post.author else "Anonymous")
         self.author_label.setStyleSheet("font-weight: bold;")
-        header_layout.addWidget(self.author_label)
+        author_info_layout.addWidget(self.author_label)
         
         self.timestamp_label = QLabel(self.post.timestamp.strftime("%Y-%m-%d %H:%M"))
-        self.timestamp_label.setStyleSheet("color: gray;")
-        header_layout.addWidget(self.timestamp_label, alignment=Qt.AlignmentFlag.AlignRight)
+        self.timestamp_label.setStyleSheet("color: gray; font-size: 10px;")
+        author_info_layout.addWidget(self.timestamp_label)
+        
+        header_layout.addLayout(author_info_layout, 1)  # Stretch factor 1
         
         # Post content
-        self.content_label = QLabel(self.post.content)
-        self.content_label.setWordWrap(True)
         content_label = QTextEdit()
         content_label.setReadOnly(True)
         if self.post:
@@ -91,11 +132,11 @@ class PostWidget(QWidget):
         
         # Add all layouts to post layout
         post_layout.addLayout(header_layout)
-        post_layout.addWidget(self.content_label)
+        post_layout.addWidget(content_label)
         post_layout.addLayout(stats_layout)
         
-        post_frame.setLayout(post_layout)
-        layout.addWidget(post_frame)
+        self.post_frame.setLayout(post_layout)
+        layout.addWidget(self.post_frame)
         self.setLayout(layout)
         
         # View comments button
@@ -112,16 +153,37 @@ class PostWidget(QWidget):
         if hasattr(self.post, 'sentiment_changed'):
             self.post.sentiment_changed.connect(lambda _: self.update_sentiment_label())
         
-        # Set border and background
-        self.setStyleSheet("""
-            QFrame {
-                border: 1px solid #ccc;
-                border-radius: 8px;
-                background-color: white;
-                padding: 10px;
-            }
-        """)
+        # Apply theme-based styling
+        self.update_theme_styling()
         
+    def update_theme_styling(self):
+        """Update styling based on current theme"""
+        current_theme = self.theme_manager.current_theme
+        
+        if current_theme == "light":
+            self.post_frame.setStyleSheet("""
+                QFrame {
+                    border: 1px solid #ccc;
+                    border-radius: 8px;
+                    background-color: white;
+                    padding: 10px;
+                }
+            """)
+        else:  # dark theme
+            self.post_frame.setStyleSheet("""
+                QFrame {
+                    border: 1px solid #444;
+                    border-radius: 8px;
+                    background-color: #353535;
+                    padding: 10px;
+                }
+            """)
+        
+    @pyqtSlot(str)
+    def on_theme_changed(self, theme):
+        """Handle theme changes"""
+        self.update_theme_styling()
+            
     @pyqtSlot()
     def like_post(self):
         if self.post and self.post_controller:
@@ -185,60 +247,89 @@ class PostWidget(QWidget):
         # Add comments to the container
         if self.post.comments:
             for comment in self.post.comments:
-                comment_widget = QFrame()
-                comment_widget.setStyleSheet("""
-                    QFrame {
-                        border: 1px solid #eee;
-                        border-radius: 4px;
-                        background-color: #f9f9f9;
-                        padding: 8px;
-                        margin: 4px;
-                    }
-                """)
-                
-                comment_layout = QVBoxLayout(comment_widget)
-                
-                # Author and timestamp
-                header_layout = QHBoxLayout()
-                author_label = QLabel(f"@{comment.author}")
-                author_label.setStyleSheet("font-weight: bold;")
-                header_layout.addWidget(author_label)
-                
-                timestamp_label = QLabel(comment.timestamp.strftime("%Y-%m-%d %H:%M"))
-                timestamp_label.setStyleSheet("color: gray; font-size: 10px;")
-                header_layout.addWidget(timestamp_label, alignment=Qt.AlignmentFlag.AlignRight)
-                
-                comment_layout.addLayout(header_layout)
-                
-                # Content
-                content_label = QLabel(comment.content)
-                content_label.setWordWrap(True)
-                comment_layout.addWidget(content_label)
-                
+                comment_widget = self.create_comment_widget(comment)
                 comments_layout.addWidget(comment_widget)
         else:
-            no_comments_label = QLabel("No comments yet.")
-            no_comments_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            comments_layout.addWidget(no_comments_label)
-        
-        # Add stretch to push all comments to the top
+            # No comments message
+            no_comments = QLabel("No comments yet")
+            no_comments.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            comments_layout.addWidget(no_comments)
+            
+        # Add some spacing at the bottom
         comments_layout.addStretch()
         
-        # Create scroll area and add the comments container to it
+        # Create scroll area and set properties
         scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)  # Important for proper resizing
+        scroll_area.setWidgetResizable(True)
         scroll_area.setWidget(comments_container)
         
-        # Add scroll area to the main layout
         layout.addWidget(scroll_area)
+        
+        # Button layout
+        button_layout = QHBoxLayout()
         
         # Close button
         close_button = QPushButton("Close")
         close_button.clicked.connect(dialog.accept)
-        layout.addWidget(close_button)
+        button_layout.addWidget(close_button)
+        
+        # Add button layout to main layout
+        layout.addLayout(button_layout)
         
         dialog.setLayout(layout)
         dialog.exec()
+
+    def create_comment_widget(self, comment):
+        """Create a widget for a single comment"""
+        comment_widget = QFrame()
+        
+        # Apply theme-appropriate styling
+        if self.theme_manager.current_theme == "light":
+            comment_widget.setStyleSheet("""
+                QFrame {
+                    border: 1px solid #eee;
+                    border-radius: 4px;
+                    background-color: #f9f9f9;
+                    padding: 8px;
+                    margin: 4px;
+                }
+            """)
+        else:  # dark theme
+            comment_widget.setStyleSheet("""
+                QFrame {
+                    border: 1px solid #444;
+                    border-radius: 4px;
+                    background-color: #2d2d2d;
+                    padding: 8px;
+                    margin: 4px;
+                }
+            """)
+        
+        comment_layout = QVBoxLayout(comment_widget)
+        
+        # Author and timestamp header
+        header_layout = QHBoxLayout()
+        
+        # Author label with verified badge if applicable
+        author_text = comment.author if isinstance(comment.author, str) else comment.author.handle
+        author_label = QLabel(f"@{author_text}")
+        author_label.setStyleSheet("font-weight: bold;")
+        header_layout.addWidget(author_label)
+        
+        # Timestamp on the right
+        timestamp_label = QLabel(comment.timestamp.strftime("%Y-%m-%d %H:%M"))
+        timestamp_label.setStyleSheet("color: gray; font-size: 10px;")
+        header_layout.addWidget(timestamp_label, alignment=Qt.AlignmentFlag.AlignRight)
+        
+        # Comment content
+        content_label = QLabel(comment.content)
+        content_label.setWordWrap(True)
+        
+        # Add widgets to layout
+        comment_layout.addLayout(header_layout)
+        comment_layout.addWidget(content_label)
+        
+        return comment_widget
 
     def update_likes(self, count):
         """Update the likes count label."""

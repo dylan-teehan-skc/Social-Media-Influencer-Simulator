@@ -280,14 +280,19 @@ class UserController:
             self.user._posts.remove(post)
             self.logger.info(f"User {self.user.handle} deleted a post: {post.content[:30]}...")
         
-    def update_profile(self, handle=None, bio=None):
+    def update_profile(self, handle=None, bio=None, profile_picture_path=None):
         """Update the user's profile."""
         if handle:
             self.user.handle = handle
         if bio:
             self.user.bio = bio
+        if profile_picture_path:
+            self.user.profile_picture_path = profile_picture_path
             
         self.logger.info(f"User profile updated: handle={self.user.handle}, bio={self.user.bio[:30]}...")
+        
+        # Return the updated user
+        return self.user
 
     def notify_followers(self, post):
         """

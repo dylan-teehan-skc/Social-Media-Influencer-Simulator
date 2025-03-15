@@ -40,6 +40,7 @@ class User(QObject):
         self._follower_count = 0
         self._recent_follower_losses = 0
         self._last_reputation_check = datetime.now().timestamp() * 1000  # Convert to milliseconds
+        self._profile_picture_path = None  # Default profile picture path
         self.logger = LoggerService.get_logger()
         self._observers = []  # For the Subject pattern
         
@@ -62,6 +63,16 @@ class User(QObject):
     def bio(self, value):
         """Set the user's bio."""
         self._bio = value
+        
+    @property
+    def profile_picture_path(self):
+        """Get the user's profile picture path."""
+        return self._profile_picture_path
+    
+    @profile_picture_path.setter
+    def profile_picture_path(self, value):
+        """Set the user's profile picture path."""
+        self._profile_picture_path = value
         
     @property
     def followers(self):
