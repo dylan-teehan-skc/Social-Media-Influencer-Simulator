@@ -128,42 +128,32 @@ class CompanyService:
             tuple: (new_user, message) where new_user is the undecorated user object
                   and message is a string explaining the result.
         """
-        print(f"Attempting to remove sponsorship from user: {user}")
-        
         # Check if the user has a company_name attribute, which indicates it's sponsored
         if not hasattr(user, 'company_name'):
-            print(f"User does not have company_name attribute: {type(user)}")
             return user, "You don't have any active sponsorships."
         
         # Store the company name before unwrapping
         company_name = user.company_name
-        print(f"Found company name: {company_name}")
         
         # Get the original user by unwrapping the decorated user
         # If the user is a VerifiedUser with a SponsoredUser inside
         if isinstance(user, VerifiedUser) and hasattr(user._user, 'company_name'):
-            print(f"User is a VerifiedUser with a SponsoredUser inside")
             # Keep the VerifiedUser wrapper but remove the SponsoredUser wrapper
             unwrapped_user = VerifiedUser(user._user._user)
-            print(f"Unwrapped to VerifiedUser with inner user: {unwrapped_user}")
         # If the user is directly a SponsoredUser
         elif hasattr(user, '_user'):
             # Get the inner user
             unwrapped_user = user._user
-            print(f"Unwrapped to inner user: {unwrapped_user}")
         else:
             # Shouldn't happen, but just in case
-            print(f"User has company_name but no _user attribute: {type(user)}")
             return user, "Error removing sponsorship."
         
         # Find the company and remove the user from its sponsored users list
         for company in self._companies:
             if company.name == company_name:
-                print(f"Found company {company_name}, removing user from sponsored list")
                 company.remove_sponsorship(user)
                 break
         
-        print(f"Sponsorship removed, returning unwrapped user: {unwrapped_user}")
         return unwrapped_user, f"Your sponsorship with {company_name} has been terminated."
     
     def check_content_alignment(self, user, post=None):
@@ -186,9 +176,6 @@ class CompanyService:
         # Get the company's political leaning
         company_leaning = company.political_leaning
         
-        # Debug logging
-        print(f"Company: {company_name}, Leaning: {company_leaning.name}")
-        
         # Get the user's posts
         user_posts = getattr(user, 'posts', [])
         
@@ -208,13 +195,9 @@ class CompanyService:
         if isinstance(user, VerifiedUser) and hasattr(user._user, 'company_name'):
             # The misaligned_posts count should be stored on the SponsoredUser
             misaligned_count = getattr(user._user, '_misaligned_posts', 0)
-            print(f"User is VerifiedUser with SponsoredUser inside, misaligned count: {misaligned_count}")
         else:
             # Regular SponsoredUser
             misaligned_count = getattr(user, '_misaligned_posts', 0)
-        
-        # Debug logging
-        print(f"Current misaligned posts count: {misaligned_count}")
         
         # Check if the new post is misaligned
         if post and post.sentiment != Sentiment.NEUTRAL:
@@ -222,9 +205,6 @@ class CompanyService:
                (company_leaning == Sentiment.RIGHT and post.sentiment == Sentiment.LEFT):
                 # Increment misaligned posts count
                 misaligned_count += 1
-                
-                # Debug logging
-                print(f"Post is misaligned! New count: {misaligned_count}")
                 
                 # Store the count on the appropriate user object
                 if isinstance(user, VerifiedUser) and hasattr(user._user, 'company_name'):
@@ -240,15 +220,9 @@ class CompanyService:
                     else:
                         setattr(user, '_misaligned_posts', 0)
                     
-                    # Debug logging
-                    print(f"Reached termination threshold! Sponsorship will be terminated.")
-                    
                     # Return termination message
                     return f"Your sponsorship has been terminated after {misaligned_count} posts that conflict with your sponsor's values."
                 else:
-                    # Debug logging
-                    print(f"Warning issued for misaligned post ({misaligned_count}/3)")
-                    
                     # Return warning message
                     return f"Warning: This is your {misaligned_count}/3 post that conflicts with your sponsor's values. Further conflicts may result in termination of your sponsorship."
         
@@ -268,32 +242,19 @@ class CompanyService:
         # Get the alignment check result
         result = self.check_content_alignment(user, post)
         
-        # Debug logging
-        print(f"Alignment check result: {result}")
-        print(f"Post sentiment: {post.sentiment.name}")
-        print(f"User misaligned posts: {getattr(user, '_misaligned_posts', 0)}")
-        
         # If sponsorship was terminated
         if result and "terminated" in result.lower():
             # Store company name before removing sponsorship
             company_name = getattr(user, 'company_name', 'your sponsor')
             
-            print(f"Terminating sponsorship with {company_name}")
-            
             # Remove the sponsorship - this returns a tuple (user, message)
             updated_user, removal_message = self.remove_sponsorship(user)
             
-            # Debug logging
-            print(f"After removal - updated user type: {type(updated_user)}")
-            print(f"Is still sponsored: {hasattr(updated_user, 'company_name') or isinstance(updated_user, SponsoredUser)}")
-            
             # Double check that sponsorship was actually removed
             if not hasattr(updated_user, 'company_name'):
-                print(f"Sponsorship successfully removed")
                 return updated_user, f"Your sponsorship with {company_name} has been terminated due to repeated content that conflicts with their values."
             else:
                 # Error case - sponsorship removal failed
-                print(f"Error: Sponsorship removal failed, user still has company_name: {getattr(updated_user, 'company_name', None)}")
                 return user, "Warning: Your content conflicts with your sponsor's values."
                 
         return user, result 
