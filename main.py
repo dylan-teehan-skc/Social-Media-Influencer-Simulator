@@ -1,9 +1,10 @@
 import sys
+import os
 from PyQt6.QtWidgets import QApplication
 from src.controllers.main_controller import MainController
 
 def main():
-    """Main entry point for the application."""
+    
     app = QApplication(sys.argv)
     
     # Create the main controller

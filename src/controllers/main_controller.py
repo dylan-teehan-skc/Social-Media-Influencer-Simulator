@@ -1,8 +1,9 @@
 from src.models.user import User
-from src.views.social_media_view import SocialMediaMainWindow
+from src.views.main_window import SocialMediaMainWindow
 from src.controllers.user_controller import UserController
 from src.controllers.post_controller import PostController
 from src.controllers.follower_controller import FollowerController
+from src.services.company_service import CompanyService
 from PyQt6.QtWidgets import QVBoxLayout
 
 class MainController:
@@ -28,6 +29,9 @@ class MainController:
         self.user_controller = UserController(self.user)
         self.post_controller = PostController()
         self.follower_controller = FollowerController()
+        
+        # Initialize the company service (this will create the default companies)
+        self.company_service = CompanyService.get_instance()
         
         # Initialize the UI
         self.init_ui()

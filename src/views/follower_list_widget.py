@@ -1,6 +1,113 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QFrame
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QLabel, QProgressBar, QFrame,
+    QPushButton, QDialog, QScrollArea, QHBoxLayout
+)
 from PyQt6.QtCore import Qt
 from src.models.post import Sentiment
+from src.views.style_manager import StyleManager
+
+class FollowerListDialog(QDialog):
+    """Dialog to display a scrollable list of followers"""
+    
+    def __init__(self, followers, parent=None):
+        super().__init__(parent)
+        self.followers = followers
+        self.theme_manager = StyleManager.get_instance()
+        self.init_ui()
+        
+    def init_ui(self):
+        self.setWindowTitle("Followers List")
+        self.setMinimumWidth(400)
+        self.setMinimumHeight(500)
+        
+        layout = QVBoxLayout(self)
+        
+        # Create a scrollable area for followers
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        
+        # Container widget for all followers
+        container = QWidget()
+        followers_layout = QVBoxLayout(container)
+        
+        # Add followers to the container
+        if self.followers:
+            for follower in self.followers:
+                follower_widget = self.create_follower_widget(follower)
+                followers_layout.addWidget(follower_widget)
+        else:
+            # No followers message
+            no_followers = QLabel("No followers yet")
+            no_followers.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            followers_layout.addWidget(no_followers)
+            
+        # Add some spacing at the bottom
+        followers_layout.addStretch()
+        
+        scroll_area.setWidget(container)
+        layout.addWidget(scroll_area)
+        
+        # Close button
+        button_layout = QHBoxLayout()
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.accept)
+        button_layout.addWidget(close_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        layout.addLayout(button_layout)
+        
+    def create_follower_widget(self, follower):
+        """Create a widget for displaying a follower"""
+        frame = QFrame()
+        frame.setFrameShape(QFrame.Shape.StyledPanel)
+        
+        # Apply theme-appropriate styling
+        if self.theme_manager.current_theme == "light":
+            frame.setStyleSheet("""
+                QFrame {
+                    border: 1px solid #e0e0e0;
+                    border-radius: 4px;
+                    background-color: #f9f9f9;
+                    padding: 10px;
+                    margin: 4px;
+                }
+            """)
+        else:  # dark theme
+            frame.setStyleSheet("""
+                QFrame {
+                    border: 1px solid #444;
+                    border-radius: 4px;
+                    background-color: #2d2d2d;
+                    padding: 10px;
+                    margin: 4px;
+                }
+            """)
+        
+        layout = QHBoxLayout(frame)
+        
+        # Follower handle
+        handle_label = QLabel(f"@{follower.handle}")
+        handle_label.setStyleSheet("font-weight: bold;")
+        layout.addWidget(handle_label)
+        
+        # Sentiment indicator
+        sentiment_text = ""
+        sentiment_color = ""
+        
+        if follower.sentiment == Sentiment.LEFT:
+            sentiment_text = "Left-leaning"
+            sentiment_color = "#3498db"  # Blue
+        elif follower.sentiment == Sentiment.RIGHT:
+            sentiment_text = "Right-leaning"
+            sentiment_color = "#e74c3c"  # Red
+        else:
+            sentiment_text = "Neutral"
+            sentiment_color = "#95a5a6"  # Gray
+            
+        sentiment_label = QLabel(sentiment_text)
+        sentiment_label.setStyleSheet(f"color: {sentiment_color};")
+        layout.addWidget(sentiment_label, alignment=Qt.AlignmentFlag.AlignRight)
+        
+        return frame
 
 class FollowerListWidget(QWidget):
     """Widget for displaying follower sentiment breakdown."""
@@ -38,11 +145,21 @@ class FollowerListWidget(QWidget):
         self.total_label.setStyleSheet("font-weight: bold; margin-top: 10px;")
         layout.addWidget(self.total_label)
         
+        # View Followers button
+        self.view_followers_button = QPushButton("View Followers")
+        self.view_followers_button.clicked.connect(self.show_followers_dialog)
+        layout.addWidget(self.view_followers_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        
         # Add stretch to push everything to the top
         layout.addStretch()
         
         # Update the stats
         self.update_followers()
+        
+    def show_followers_dialog(self):
+        """Show dialog with scrollable list of followers"""
+        dialog = FollowerListDialog(self.user.followers, self)
+        dialog.exec()
         
     def create_sentiment_frame(self, title, color):
         """Create a frame for displaying sentiment statistics."""
