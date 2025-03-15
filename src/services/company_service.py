@@ -203,8 +203,15 @@ class CompanyService:
         if not all_posts:
             return None
             
-        # Count misaligned posts
-        misaligned_count = getattr(user, '_misaligned_posts', 0)
+        # Count misaligned posts - store it directly on the user object
+        # For VerifiedUser with SponsoredUser inside, we need to access the attribute differently
+        if isinstance(user, VerifiedUser) and hasattr(user._user, 'company_name'):
+            # The misaligned_posts count should be stored on the SponsoredUser
+            misaligned_count = getattr(user._user, '_misaligned_posts', 0)
+            print(f"User is VerifiedUser with SponsoredUser inside, misaligned count: {misaligned_count}")
+        else:
+            # Regular SponsoredUser
+            misaligned_count = getattr(user, '_misaligned_posts', 0)
         
         # Debug logging
         print(f"Current misaligned posts count: {misaligned_count}")
@@ -219,13 +226,19 @@ class CompanyService:
                 # Debug logging
                 print(f"Post is misaligned! New count: {misaligned_count}")
                 
-                # Store the count on the user object
-                setattr(user, '_misaligned_posts', misaligned_count)
+                # Store the count on the appropriate user object
+                if isinstance(user, VerifiedUser) and hasattr(user._user, 'company_name'):
+                    setattr(user._user, '_misaligned_posts', misaligned_count)
+                else:
+                    setattr(user, '_misaligned_posts', misaligned_count)
                 
                 # Check if we've reached the threshold for termination (3 misaligned posts)
                 if misaligned_count >= 3:
                     # Reset the counter
-                    setattr(user, '_misaligned_posts', 0)
+                    if isinstance(user, VerifiedUser) and hasattr(user._user, 'company_name'):
+                        setattr(user._user, '_misaligned_posts', 0)
+                    else:
+                        setattr(user, '_misaligned_posts', 0)
                     
                     # Debug logging
                     print(f"Reached termination threshold! Sponsorship will be terminated.")
