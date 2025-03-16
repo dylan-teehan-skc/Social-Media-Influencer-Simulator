@@ -19,12 +19,7 @@ class InappropriateContentFilter(ContentInterceptor):
         ]
 
     def intercept(self, post: Post) -> None:
-        """
-        Check if the post contains inappropriate content.
 
-        Args:
-            post: The post to check
-        """
         content_lower = post.content.lower()
 
         # Check for inappropriate content
@@ -38,8 +33,7 @@ class InappropriateContentFilter(ContentInterceptor):
             post.is_valid = False
 
             # Create warning message
-            warning_msg = f"Inappropriate content detected: Your post contains potentially inappropriate content ({
-                ', '.join(detected_words)})"
+            warning_msg = f"Inappropriate content detected: Your post contains banned words ({', '.join(detected_words)})"
 
             # Add warning to dispatcher if available
             if hasattr(post, "_dispatcher") and post._dispatcher:

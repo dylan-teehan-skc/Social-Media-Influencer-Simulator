@@ -113,6 +113,9 @@ class CompanyService:
             company.political_leaning == Sentiment.NEUTRAL
             or company.political_leaning == user_sentiment
         ):
+            self.logger.info(
+                f"User {user.handle} applied for sponsorship from {company.name}"
+            )
             return True, "Sponsorship application successful!"
         else:
             return (

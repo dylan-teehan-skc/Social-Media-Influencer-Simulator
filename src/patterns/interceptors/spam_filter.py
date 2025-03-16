@@ -32,8 +32,7 @@ class SpamFilter(ContentInterceptor):
             post.is_spam = True
 
             # Create warning message
-            warning_msg = f"Potential spam detected: Your post contains promotional phrases ({
-                ', '.join(detected_keywords)})"
+            warning_msg = f"Potential spam detected: Your post contains promotional phrases ({', '.join(detected_keywords)})"
 
             # Add warning to dispatcher if available
             if hasattr(post, "_dispatcher") and post._dispatcher:
