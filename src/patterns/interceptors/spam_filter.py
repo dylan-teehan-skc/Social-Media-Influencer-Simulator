@@ -16,9 +16,7 @@ class SpamFilter(ContentInterceptor):
         """Load spam keywords from the spam.txt file"""
         keywords = set()  
         try:
-            current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-            spam_file_path = os.path.join(current_dir, 'spam.txt')
-            
+            spam_file_path = 'src/patterns/interceptors/interception_criteria/spam.txt'
             
             self.logger.info(f"Attempting to load spam keywords from: {spam_file_path}")
             
