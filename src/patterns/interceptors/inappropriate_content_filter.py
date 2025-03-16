@@ -8,14 +8,11 @@ class InappropriateContentFilter(ContentInterceptor):
         self.logger = LoggerService.get_logger()
         # List of inappropriate words/phrases to filter
         self.inappropriate_words = [
-            "offensive",
-            "explicit",
-            "hate speech",
-            "slur",
-            "profanity",
-            "violent content",
-            "harassment",
-            "discrimination",
+            "fuck",
+            "shit",
+            "bitch",
+            "hate",
+            "asshole"
         ]
 
     def intercept(self, post: Post) -> None:
@@ -38,11 +35,6 @@ class InappropriateContentFilter(ContentInterceptor):
             # Add warning to dispatcher if available
             if hasattr(post, "_dispatcher") and post._dispatcher:
                 post._dispatcher.add_warning(warning_msg)
-
-            self.logger.warning(
-                f"InappropriateContentFilter: Inappropriate content detected: '{
-                    ', '.join(detected_words)}'"
-            )
         else:
             self.logger.info(
                 "InappropriateContentFilter: No inappropriate content detected"
