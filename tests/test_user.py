@@ -1,19 +1,18 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+
 from PyQt6.QtCore import QObject
 
-from src.models.user import User
-from src.models.post import Post, Comment
-from src.models.sentiment import Sentiment
 from src.models.follower import Follower
-from datetime import datetime
+from src.models.sentiment import Sentiment
+from src.models.user import User
 
 
 class TestUser(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.user = User("test_user", "Test user bio")
-        
+
         # Set up some mock followers with different political leanings
         self.left_follower = Follower(Sentiment.LEFT, "left_follower")
         self.right_follower = Follower(Sentiment.RIGHT, "right_follower")
@@ -46,29 +45,29 @@ class TestUser(unittest.TestCase):
         """Test that observers are notified correctly."""
         mock_observer = MagicMock()
         mock_post = MagicMock()
-        
+
         self.user.attach(mock_observer)
         self.user.notify(mock_post)
-        
+
         mock_observer.update.assert_called_once_with(self.user, mock_post)
 
     def test_property_setters(self):
         """Test the property setters work correctly."""
         new_handle = "new_handle"
         new_bio = "new bio"
-        
+
         self.user.handle = new_handle
         self.user.bio = new_bio
-        
+
         self.assertEqual(self.user.handle, new_handle)
         self.assertEqual(self.user.bio, new_bio)
 
     def test_signals(self):
         """Test that signals are defined correctly."""
-        self.assertTrue(hasattr(self.user, 'follower_added'))
-        self.assertTrue(hasattr(self.user, 'follower_removed'))
-        self.assertTrue(hasattr(self.user, 'post_created'))
-        self.assertTrue(hasattr(self.user, 'reputation_changed'))
+        self.assertTrue(hasattr(self.user, "follower_added"))
+        self.assertTrue(hasattr(self.user, "follower_removed"))
+        self.assertTrue(hasattr(self.user, "post_created"))
+        self.assertTrue(hasattr(self.user, "reputation_changed"))
 
     def test_constants(self):
         """Test that the constants are defined with correct values."""
@@ -82,5 +81,5 @@ class TestUser(unittest.TestCase):
         self.assertEqual(self.user.FOLLOWER_MULTIPLIER_SCALE, 1000)
 
 
-if __name__ == '__main__':
-    unittest.main() 
+if __name__ == "__main__":
+    unittest.main()

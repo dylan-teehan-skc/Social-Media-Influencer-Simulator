@@ -5,11 +5,11 @@ from src.models.post import Post
 
 class PostBuilder(ABC):
     @abstractmethod
-    def set_content(self, content: str) -> 'PostBuilder':
+    def set_content(self, content: str) -> "PostBuilder":
         pass
 
     @abstractmethod
-    def set_author(self, author) -> 'PostBuilder':
+    def set_author(self, author) -> "PostBuilder":
         pass
 
     @abstractmethod
