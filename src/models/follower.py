@@ -136,10 +136,7 @@ class Follower(QObject):
             f"by {post.author.handle}" if post.author else "(no author)"
         )
         self.logger.info(
-            f"Follower {
-                self.handle} (political lean: {
-                self.political_lean}) has {alignment}% alignment with {
-                post.sentiment.name} post {author_info}"
+            f"Follower {self.handle} (political lean: {self.political_lean}) has {alignment}% alignment with {post.sentiment.name} post {author_info}"
         )
 
         # Emit signal for interaction

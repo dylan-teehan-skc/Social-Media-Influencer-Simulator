@@ -98,5 +98,3 @@ class User(QObject):
     def notify(self, post=None):
         for observer in self._observers:
             observer.update(self, post)
-
-    # notify_followers method has been moved to UserController

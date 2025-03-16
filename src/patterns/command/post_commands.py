@@ -32,8 +32,7 @@ class LikeCommand(Command):
             else "(no author)"
         )
         self.logger.info(
-            f"Undid: Follower '{
-                self.follower_handle}' liked post by {author_info}"
+            f"Undid: Follower '{self.follower_handle}' liked post by {author_info}"
         )
 
 
@@ -55,8 +54,7 @@ class CommentCommand(Command):
             else "(no author)"
         )
         self.logger.info(
-            f"Follower '{
-                self.comment.author}' commented on post by {author_info}"
+            f"Follower '{self.comment.author}' commented on post by {author_info}"
         )
 
     def undo(self) -> None:
@@ -69,8 +67,7 @@ class CommentCommand(Command):
                 else "(no author)"
             )
             self.logger.info(
-                f"Undid: Follower '{
-                    self.comment.author}' commented on post by {author_info}"
+                f"Undid: Follower '{self.comment.author}' commented on post by {author_info}"
             )
 
 
@@ -103,6 +100,5 @@ class ShareCommand(Command):
             else "(no author)"
         )
         self.logger.info(
-            f"Undid: Follower '{
-                self.follower_handle}' shared post by {author_info}"
+            f"Undid: Follower '{self.follower_handle}' shared post by {author_info}"
         )
