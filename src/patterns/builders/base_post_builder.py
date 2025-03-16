@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from src.patterns.interfaces.post_builder import PostBuilder
 from src.models.post import Post
+from src.patterns.interfaces.post_builder import PostBuilder
 from src.services.logger_service import LoggerService
 
 if TYPE_CHECKING:
@@ -18,20 +18,26 @@ class BasePostBuilder(PostBuilder, ABC):
         self.builder_name = builder_name
         self.logger.debug(f"Initialized {self.builder_name}")
 
-    def set_content(self, content: str) -> 'BasePostBuilder':
+    def set_content(self, content: str) -> "BasePostBuilder":
         self.post.content = content
-        self.logger.debug(f"{self.builder_name}: Set content: %s",
-                          content[:50] + "..." if len(content) > 50 else content)
+        self.logger.debug(
+            f"{self.builder_name}: Set content: %s",
+            content[:50] + "..." if len(content) > 50 else content,
+        )
         return self
 
-    def set_author(self, author: 'User') -> 'BasePostBuilder':
+    def set_author(self, author: "User") -> "BasePostBuilder":
         self._author = author
-        self.logger.debug(f"{self.builder_name}: Set author: %s", author.handle)
+        self.logger.debug(
+            f"{self.builder_name}: Set author: %s", author.handle
+        )
         return self
 
-    def set_image(self, image_path: str) -> 'BasePostBuilder':
+    def set_image(self, image_path: str) -> "BasePostBuilder":
         self._image_path = image_path
-        self.logger.debug(f"{self.builder_name}: Set image path: %s", image_path)
+        self.logger.debug(
+            f"{self.builder_name}: Set image path: %s", image_path
+        )
         return self
 
     def _apply_common_attributes(self):
