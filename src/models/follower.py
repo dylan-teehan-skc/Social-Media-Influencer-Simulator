@@ -70,9 +70,7 @@ class Follower(QObject):
         ]
 
         self.logger.debug(
-            f"Follower created: {handle} with {
-                sentiment.name} sentiment and political lean {
-                self._political_lean}"
+            f"Follower created: {handle} with {sentiment.name} sentiment and political lean {self._political_lean}"
         )
 
     @property

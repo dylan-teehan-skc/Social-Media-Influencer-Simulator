@@ -223,8 +223,7 @@ class Post(QObject):
         self._followers_gained += 1
         self.followers_gained_changed.emit(self._followers_gained)
         self.logger.debug(
-            f"Follower gained. Total followers gained: {
-                self._followers_gained}"
+            f"Follower gained. Total followers gained: {self._followers_gained}"
         )
 
     @classmethod
