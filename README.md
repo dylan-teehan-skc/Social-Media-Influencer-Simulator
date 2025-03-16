@@ -20,73 +20,152 @@ This application simulates a social media platform where users can create profil
 
 ## Architecture
 
+The application follows a Model-View-Controller (MVC) architecture pattern with additional design patterns.
+ Here's the class diagram showing the main components and their relationships:
+
 ```mermaid
-%%{init: {
-  'theme': 'base', 
-  'themeVariables': { 
-    'primaryColor': '#f0f8ff', 
-    'primaryTextColor': '#000000', 
-    'primaryBorderColor': '#7C0200', 
-    'lineColor': '#000000', 
-    'secondaryColor': '#f5f5f5', 
-    'tertiaryColor': '#fff0f0',
-    'background': '#e6f2ff'
-  }
-}}%%
-erDiagram
-    USER {
-        string handle PK
-        string bio
-        int follower_count
-        int recent_follower_losses
-        string profile_picture_path
+classDiagram
+    %% Models
+    class User {
+        -string handle
+        -string bio
+        -List~Follower~ followers
+        -List~Post~ posts
+        -int follower_count
+        -int recent_follower_losses
+        -string profile_picture_path
+        +attach(observer)
+        +detach(observer)
+        +notify(post)
     }
     
-    POST {
-        string content
-        string image_path
-        datetime timestamp
-        int likes
-        int shares
-        int followers_gained
-        int followers_lost
-        bool is_spam
-        bool is_valid
+    class Post {
+        -string content
+        -string image_path
+        -datetime timestamp
+        -int likes
+        -int shares
+        -List~Comment~ comments
+        -Sentiment sentiment
+        -bool is_spam
+        -bool is_valid
+        +increment_likes()
+        +decrement_likes()
+        +add_comment(comment)
     }
     
-    COMMENT {
-        string content
-        string author
-        datetime timestamp
-        enum sentiment
+    class Follower {
+        -string handle
+        -int political_lean
+        -Sentiment sentiment
+        +interact_with_post(post)
+        +update(subject, post)
     }
     
-    FOLLOWER {
-        string handle
-        int political_lean
-        enum sentiment
+    class Company {
+        -string name
+        -string description
+        -string logo_path
+        -Sentiment political_leaning
+        -List~User~ sponsored_users
+        +sponsor_user(user)
+        +remove_sponsorship(user)
     }
     
-    COMPANY {
-        string name PK
-        string description
-        enum political_leaning
-        int min_followers
-        int max_sponsored_users
+    %% Controllers
+    class MainController {
+        -User user
+        -UserController user_controller
+        -PostController post_controller
+        -FollowerController follower_controller
+        +init_ui()
+        +get_all_posts()
     }
     
-    SENTIMENT {
-        enum value "LEFT|RIGHT|NEUTRAL"
+    class UserController {
+        -User user
+        +add_follower(follower)
+        +remove_follower(follower)
+        +update_profile(data)
     }
     
-    USER ||--o{ POST : "creates"
-    USER ||--o{ FOLLOWER : "has"
-    USER }o--o{ COMPANY : "sponsored by"
-    POST ||--o{ COMMENT : "has"
-    POST }o--|| SENTIMENT : "has"
-    FOLLOWER }o--|| SENTIMENT : "has"
-    COMPANY }o--|| SENTIMENT : "has"
+    class PostController {
+        +create_post(content, author)
+        +like_post(post)
+        +add_comment(post, comment)
+    }
+    
+    %% Views
+    class SocialMediaMainWindow {
+        -UserProfileWidget profile_widget
+        -CreatePostWidget create_post_widget
+        -FeedWidget feed_widget
+        -FollowerListWidget followers_widget
+        -NewsWidget news_widget
+        +update_user_profile()
+        +init_ui()
+    }
+    
+    %% Services
+    class SentimentService {
+        +analyze_sentiment(content)
+        -analyze_with_gemini(content)
+    }
+    
+    class CompanyService {
+        -List~Company~ companies
+        +get_available_sponsorships()
+        +apply_for_sponsorship(user, company)
+    }
+    
+    %% Patterns
+    class PostBuilderFactory {
+        +get_builder(post_type)
+    }
+    
+    class BasePostBuilder {
+        +set_content(content)
+        +set_author(author)
+        +set_image_path(path)
+        +build()
+    }
+    
+    %% Relationships
+    User "1" -- "*" Post : creates
+    User "1" -- "*" Follower : has
+    User "*" -- "*" Company : sponsored by
+    Post "1" -- "*" Comment : has
+    Post "1" -- "1" Sentiment : has
+    Follower -- "1" Sentiment : has
+    Company -- "1" Sentiment : has
+    
+    MainController -- UserController : manages
+    MainController -- PostController : manages
+    MainController -- SocialMediaMainWindow : controls
+    
+    PostBuilderFactory ..> BasePostBuilder : creates
+    BasePostBuilder ..> Post : builds
+    
+    SocialMediaMainWindow -- UserController : uses
+    SocialMediaMainWindow -- PostController : uses
+    
+    PostController -- SentimentService : uses
+    UserController -- CompanyService : uses
 ```
+
+The architecture follows these key principles:
+
+1. **Model Layer**: Contains the core business logic and data structures (`User`, `Post`, `Follower`, `Company`)
+2. **View Layer**: Handles the UI components and user interaction (`SocialMediaMainWindow` and its widgets)
+3. **Controller Layer**: Manages the interaction between Models and Views (`MainController`, `UserController`, `PostController`)
+4. **Services**: Provides specialized functionality (`SentimentService`, `CompanyService`)
+5. **Design Patterns**: Implements various patterns for extensibility and maintainability:
+   - Factory Pattern for creating post builders
+   - Builder Pattern for constructing posts
+   - Observer Pattern for follower notifications
+   - Command Pattern for post interactions
+   - Decorator Pattern for user features
+   - Interceptor Pattern for content filtering
 
 ## Entity Relationship Diagram
 
