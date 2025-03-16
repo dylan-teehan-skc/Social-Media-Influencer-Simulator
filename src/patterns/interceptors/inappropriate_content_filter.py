@@ -1,6 +1,7 @@
 from src.models.post import Post
 from src.patterns.interfaces.content_interceptor import ContentInterceptor
 from src.services.logger_service import LoggerService
+import os
 
 
 class InappropriateContentFilter(ContentInterceptor):
