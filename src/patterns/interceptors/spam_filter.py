@@ -58,6 +58,7 @@ class SpamFilter(ContentInterceptor):
 
         SPAM_THRESHOLD = 2
         if len(detected_phrases) >= SPAM_THRESHOLD:
+            post.is_spam = True
             post.is_valid = False
             warning_msg = f"Potential spam detected: Your post contains multiple prohibited phrases ({', '.join(detected_phrases)})"
             
