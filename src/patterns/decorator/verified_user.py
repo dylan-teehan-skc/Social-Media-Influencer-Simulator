@@ -3,6 +3,7 @@ from src.patterns.interfaces.user_decorator import UserDecorator
 
 class VerifiedUser(UserDecorator):
     def get_handle(self) -> str:
+        # Add verification checkmark to user handle
         return f"{self._user.handle} ✔️"
 
     def get_bio(self) -> str:
@@ -10,22 +11,22 @@ class VerifiedUser(UserDecorator):
 
     @property
     def follower_count(self):
-        """Forward follower_count to the decorated user."""
+        # Forward follower_count to the decorated user
         return self._user.follower_count
 
     @property
     def followers(self):
-        """Forward followers to the decorated user."""
+        # Forward followers to the decorated user
         return self._user.followers
 
     @property
     def posts(self):
-        """Forward posts to the decorated user."""
+        # Forward posts to the decorated user
         return self._user.posts
 
     @property
     def recent_follower_losses(self):
-        """Forward recent_follower_losses to the decorated user."""
+        # Forward recent_follower_losses to the decorated user
         return self._user.recent_follower_losses
 
     # Forward signals
@@ -67,7 +68,6 @@ class VerifiedUser(UserDecorator):
     def update_reputation_recovery(self, current_time):
         return self._user.update_reputation_recovery(current_time)
 
-    # Forward any other attribute access to the wrapped user
     def __getattr__(self, name):
-        """Forward any attribute access, including private attributes, to the wrapped user."""
+        # Forward any attribute access to the wrapped user
         return getattr(self._user, name)

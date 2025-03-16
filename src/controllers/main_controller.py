@@ -7,22 +7,18 @@ from src.views.main_window import SocialMediaMainWindow
 
 
 class MainController:
-    """Main controller for the application."""
 
-    # Singleton instance
+    # Main controller for the application
     _instance = None
 
     @classmethod
     def get_instance(cls):
-        """Get the singleton instance of the MainController."""
         return cls._instance
 
     def __init__(self):
-        """Initialize the main controller."""
         # Set the singleton instance
         MainController._instance = self
 
-        # Create a user model
         self.user = User("default_user", "Default bio")
 
         # Create controllers
@@ -30,19 +26,16 @@ class MainController:
         self.post_controller = PostController()
         self.follower_controller = FollowerController()
 
-        # Initialize the company service (this will create the default
-        # companies)
+        # Initialize the company service
         self.company_service = CompanyService.get_instance()
 
-        # Initialize the UI
+        # Initialise UI
         self.init_ui()
 
         # Generate some initial followers
         self._generate_initial_followers()
 
     def init_ui(self):
-        """Initialize the UI."""
-        # Create the main window and pass the user model
         self.main_window = SocialMediaMainWindow(self.user)
 
         # Set controllers in the main window
@@ -50,7 +43,6 @@ class MainController:
         self.main_window.set_post_controller(self.post_controller)
 
     def _generate_initial_followers(self, count=10):
-        """Generate some initial followers for the user."""
         # Create a batch of followers with balanced distribution
         followers = self.follower_controller.create_followers_batch(count)
 
@@ -61,7 +53,6 @@ class MainController:
         return len(followers)
 
     def get_all_posts(self):
-        """Get all posts from the user and their followers."""
         posts = []
 
         # Get posts from the main user

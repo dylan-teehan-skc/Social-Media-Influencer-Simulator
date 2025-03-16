@@ -9,6 +9,8 @@ if TYPE_CHECKING:
 
 
 class TextPostBuilder(BasePostBuilder):
+    # Builder for creating text-only posts
+
     def __init__(self):
         super().__init__("TextPostBuilder")
         self.logger = LoggerService.get_logger()
@@ -21,9 +23,11 @@ class TextPostBuilder(BasePostBuilder):
         return super().set_author(author)
 
     def set_image(self, image_path: str) -> "TextPostBuilder":
+        # Override to maintain correct return type
         return super().set_image(image_path)
 
     def build(self) -> Post:
+        # Build and return the final text post
         self._apply_common_attributes()
         self.logger.info(
             "TextPostBuilder: Built post for author %s with content length %d",

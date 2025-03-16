@@ -8,13 +8,11 @@ from src.services.logger_service import LoggerService
 
 
 class Follower(QObject):
-    """Follower model representing a user who follows another user."""
+    # Follower model representing a user who follows content creators
 
     # Signals
-    interaction_occurred = pyqtSignal(
-        object, object
-    )  # Emitted when follower interacts with a post
-    unfollowed = pyqtSignal(object)  # Emitted when follower unfollows
+    interaction_occurred = pyqtSignal(object, object)
+    unfollowed = pyqtSignal(object)
 
     # Political lean thresholds
     LEFT_LEAN_THRESHOLD = 40
@@ -32,7 +30,6 @@ class Follower(QObject):
     }
 
     def __init__(self, sentiment: Sentiment, handle: str):
-        """Initialize a follower with sentiment and handle."""
         super().__init__()
         self._handle = handle
         self.logger = LoggerService.get_logger()
@@ -45,10 +42,8 @@ class Follower(QObject):
         else:
             self._political_lean = randint(40, 60)  # Neutral: 40-60
 
-        self._sentiment = sentiment  # Store the follower's sentiment
-        self.command_history = (
-            CommandHistory()
-        )  # Track commands for potential undo
+        self._sentiment = sentiment
+        self.command_history = CommandHistory()
 
         self._positive_comments = [
             "Couldn't agree more!",
@@ -82,28 +77,23 @@ class Follower(QObject):
 
     @property
     def handle(self):
-        """Get the follower's handle."""
         return self._handle
 
     @property
     def sentiment(self):
-        """Get the follower's sentiment."""
         return self._sentiment
 
     @property
     def political_lean(self):
-        """Get the follower's political lean."""
         return self._political_lean
 
     @political_lean.setter
     def political_lean(self, value):
-        """Set the follower's political lean."""
         self._political_lean = max(0, min(100, value))
 
     @classmethod
     def create_with_random_handle(cls, sentiment: Sentiment):
-        """Create a follower with a randomly generated handle based on sentiment."""
-        # Use the sentiment name as the key
+        # Generate a follower with a sentiment-based random handle
         sentiment_name = sentiment.name
         prefixes = cls.FOLLOWER_PREFIXES[sentiment_name]
         prefix = prefixes[randint(0, len(prefixes) - 1)]
@@ -112,8 +102,7 @@ class Follower(QObject):
 
     @classmethod
     def create_random_follower(cls, index: int):
-        """Create a follower with random sentiment based on index."""
-        # Get a random sentiment based on index
+        # Create a follower with sentiment determined by index
         sentiment_names = list(cls.FOLLOWER_PREFIXES.keys())
         sentiment_name = sentiment_names[index % len(sentiment_names)]
 
@@ -127,33 +116,22 @@ class Follower(QObject):
 
         return cls.create_with_random_handle(sentiment)
 
-    # Observer pattern method (implemented directly instead of inheriting)
+    # Observer pattern method
     def update(self, subject, post=None):
-        """Handle updates from the subject (user)."""
+        # React to updates from the subject (user)
         if post:
-            # Interact with the post
             self.interact_with_post(post)
-
-            # The decision to unfollow is delegated to the FollowerController
-            # which will call this method and handle the result
 
         return False  # No unfollowing occurred by default
 
     def interact_with_post(self, post: Post) -> None:
-        """Interact with a post based on political alignment."""
         # Calculate alignment between follower and post
         if post.sentiment == Sentiment.LEFT:
-            alignment = (
-                100 - self.political_lean
-            )  # Higher political_lean = less aligned with LEFT
+            alignment = 100 - self.political_lean
         elif post.sentiment == Sentiment.RIGHT:
-            alignment = (
-                self.political_lean
-            )  # Higher political_lean = more aligned with RIGHT
+            alignment = self.political_lean
         else:
             # For neutral posts, alignment is based on how moderate the follower is
-            # Followers closer to center (50) have higher alignment with
-            # neutral posts
             alignment = 100 - abs(50 - self.political_lean) * 2
 
         author_info = (
@@ -168,6 +146,3 @@ class Follower(QObject):
 
         # Emit signal for interaction
         self.interaction_occurred.emit(self, post)
-
-        # The actual interaction logic (commenting, liking, sharing) is
-        # delegated to the FollowerController

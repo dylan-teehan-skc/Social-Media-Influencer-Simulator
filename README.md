@@ -33,122 +33,59 @@ This application simulates a social media platform where users can create profil
     'background': '#e6f2ff'
   }
 }}%%
-graph TD
-    %% Main Application Flow
-    subgraph Application["Application"]
-        Main[main.py] --> MainController
-    end
-
-    %% MVC Architecture
-    subgraph Controllers["Controllers"]
-        MainController[MainController] --> UserController
-        MainController --> PostController
-        MainController --> FollowerController
-        MainController --> CompanyService
-    end
-
-    subgraph Models["Models"]
-        User[User Model] --> Post[Post Model]
-        User --> Follower[Follower Model]
-        Post --> Sentiment[Sentiment Enum]
-        Company[Company Model]
-    end
-
-    subgraph Views["Views"]
-        MainWindow[MainWindow] --> SocialMediaView
-        SocialMediaView --> UserProfileWidget
-        SocialMediaView --> FeedWidget
-        SocialMediaView --> FollowerListWidget
-        SocialMediaView --> NewsWidget
-        FeedWidget --> PostWidget
-        FeedWidget --> CreatePostWidget
-        SocialMediaView --> ThemeSwitcherWidget
-    end
-
-    %% Services
-    subgraph Services["Services"]
-        SentimentService[Sentiment Service] --> GoogleGeminiAPI[Google Gemini API]
-        LoggerService[Logger Service]
-        CompanyService[Company Service]
-    end
-
-    %% Design Patterns
-    subgraph DesignPatterns["Design Patterns"]
-        %% Factory Pattern
-        Factory[Factory Pattern] --> PostBuilderFactory
-        PostBuilderFactory --> TextPostBuilder
-        PostBuilderFactory --> ImagePostBuilder
-        
-        %% Builder Pattern
-        Builder[Builder Pattern] --> BasePostBuilder
-        BasePostBuilder --> TextPostBuilder
-        BasePostBuilder --> ImagePostBuilder
-        
-        %% Command Pattern
-        Command[Command Pattern] --> LikeCommand
-        Command --> CommentCommand
-        Command --> ShareCommand
-        Command --> CommandHistory
-        
-        %% Decorator Pattern
-        Decorator[Decorator Pattern] --> BaseUser
-        BaseUser --> VerifiedUser
-        BaseUser --> SponsoredUser
-        
-        %% Interceptor Pattern
-        Interceptor[Interceptor Pattern] --> Dispatcher
-        Dispatcher --> PostCreationInterceptor
-        Dispatcher --> SpamFilter
-        Dispatcher --> InappropriateContentFilter
-    end
-
-    %% Connections between components
-    MainController ==> MainWindow
+erDiagram
+    USER {
+        string handle PK
+        string bio
+        int follower_count
+        int recent_follower_losses
+        string profile_picture_path
+    }
     
-    UserController ==> User
-    UserController ==> Dispatcher
-    UserController ==> PostBuilderFactory
+    POST {
+        string content
+        string image_path
+        datetime timestamp
+        int likes
+        int shares
+        int followers_gained
+        int followers_lost
+        bool is_spam
+        bool is_valid
+    }
     
-    PostController ==> Post
-    PostController ==> SentimentService
-    PostController ==> PostBuilderFactory
+    COMMENT {
+        string content
+        string author
+        datetime timestamp
+        enum sentiment
+    }
     
-    FollowerController ==> Follower
-    FollowerController ==> LikeCommand
-    FollowerController ==> CommentCommand
-    FollowerController ==> ShareCommand
+    FOLLOWER {
+        string handle
+        int political_lean
+        enum sentiment
+    }
     
-    CompanyService ==> Company
-    CompanyService ==> SponsoredUser
-    CompanyService ==> VerifiedUser
+    COMPANY {
+        string name PK
+        string description
+        enum political_leaning
+        int min_followers
+        int max_sponsored_users
+    }
     
-    CreatePostWidget ==> PostController
-    PostWidget ==> PostController
-    UserProfileWidget ==> UserController
-    FollowerListWidget ==> FollowerController
-    NewsWidget ==> CompanyService
+    SENTIMENT {
+        enum value "LEFT|RIGHT|NEUTRAL"
+    }
     
-    %% Data Flow
-    User ===> Post
-    User ===> Follower
-    User ===> Company
-    Post ===> SentimentService
-    Post ===> Dispatcher
-    Post ===> PostBuilderFactory
-    
-    %% Styling
-    classDef controller fill:#e6f7ff,stroke:#0066cc,stroke-width:2px,color:#003366,font-weight:bold
-    classDef model fill:#f0fff0,stroke:#006600,stroke-width:2px,color:#003300,font-weight:bold
-    classDef view fill:#fff0f5,stroke:#cc0066,stroke-width:2px,color:#660033,font-weight:bold
-    classDef service fill:#fffaf0,stroke:#cc6600,stroke-width:2px,color:#663300,font-weight:bold
-    classDef pattern fill:#f5f0ff,stroke:#6600cc,stroke-width:2px,color:#330066,font-weight:bold
-    classDef edge stroke:#000000,stroke-width:3px
-    
-    class MainController,UserController,PostController,FollowerController controller
-    class User,Post,Follower,Sentiment,Company model
-    class MainWindow,SocialMediaView,UserProfileWidget,FeedWidget,FollowerListWidget,NewsWidget,PostWidget,CreatePostWidget,ThemeSwitcherWidget view
-    class SentimentService,LoggerService,CompanyService service
-    class Factory,Builder,Command,Decorator,Interceptor,PostBuilderFactory,BasePostBuilder,TextPostBuilder,ImagePostBuilder,LikeCommand,CommentCommand,ShareCommand,CommandHistory,BaseUser,VerifiedUser,SponsoredUser,Dispatcher,PostCreationInterceptor,SpamFilter,InappropriateContentFilter pattern
+    USER ||--o{ POST : "creates"
+    USER ||--o{ FOLLOWER : "has"
+    USER }o--o{ COMPANY : "sponsored by"
+    POST ||--o{ COMMENT : "has"
+    POST }o--|| SENTIMENT : "has"
+    FOLLOWER }o--|| SENTIMENT : "has"
+    COMPANY }o--|| SENTIMENT : "has"
 ```
 
 ## Entity Relationship Diagram
@@ -172,42 +109,42 @@ erDiagram
     USER {
         string handle PK
         string bio
-        int followers_count
-        int posts_count
-        bool is_verified
-        bool is_sponsored
+        int follower_count
+        int recent_follower_losses
+        string profile_picture_path
     }
     
     POST {
-        string id PK
         string content
         string image_path
-        datetime created_at
+        datetime timestamp
         int likes
         int shares
-        string author_handle FK
+        int followers_gained
+        int followers_lost
+        bool is_spam
+        bool is_valid
     }
     
     COMMENT {
-        string id PK
         string content
         string author
-        datetime created_at
-        string post_id FK
+        datetime timestamp
+        enum sentiment
     }
     
     FOLLOWER {
-        string id PK
         string handle
-        int political_leaning
-        datetime followed_at
-        string user_handle FK
+        int political_lean
+        enum sentiment
     }
     
     COMPANY {
         string name PK
         string description
         enum political_leaning
+        int min_followers
+        int max_sponsored_users
     }
     
     SENTIMENT {
@@ -216,9 +153,10 @@ erDiagram
     
     USER ||--o{ POST : "creates"
     USER ||--o{ FOLLOWER : "has"
-    USER }o--|| COMPANY : "sponsored by"
+    USER }o--o{ COMPANY : "sponsored by"
     POST ||--o{ COMMENT : "has"
     POST }o--|| SENTIMENT : "has"
+    FOLLOWER }o--|| SENTIMENT : "has"
     COMPANY }o--|| SENTIMENT : "has"
 ```
 
@@ -232,7 +170,8 @@ This project demonstrates several key software design patterns:
 4. **Command Pattern**: Encapsulates post interactions as objects
 5. **Decorator Pattern**: Adds features to users dynamically (verification, sponsorships)
 6. **Interceptor Pattern**: Processes posts before they're created
-7. **Singleton Pattern**: Ensures only one instance of certain services
+7. **Observer Pattern**: Followers observe users and react to their posts
+8. **Singleton Pattern**: Ensures only one instance of certain services (LoggerService)
 
 ## Installation
 
@@ -278,8 +217,8 @@ python main.py
 - `theme_switcher_widget.py`: Theme toggle control
 - `style_manager.py`: UI styling management
 
-### Controllers (`src/controllers/`)
-- `main_controller.py`: Main application controller
+### Controllers (`src/patterns/controllers/`)
+- `app_controller.py`: Main application controller
 - `user_controller.py`: User operations controller
 - `post_controller.py`: Post operations controller
 - `follower_controller.py`: Follower operations controller
@@ -301,12 +240,16 @@ python main.py
   - `text_post_builder.py`: Text post builder
   - `image_post_builder.py`: Image post builder
 - `decorator/`: Decorator pattern implementation
-  - `base_user.py`: Base user interface
+  - `base_user.py`: Base user decorator
   - `verified_user.py`: Verified user decorator
   - `sponsered_user.py`: Sponsored user decorator
+- `interfaces/`: Interface definitions
+  - `user_decorator.py`: User decorator interface
+  - `command.py`: Command interface
+  - `content_interceptor.py`: Content interceptor interface
+  - `post_builder.py`: Post builder interface
 - `interceptors/`: Interceptor pattern implementation
   - `dispatcher.py`: Interceptor dispatcher
-  - `post_creation_interceptor.py`: Post validation
   - `spam_filter.py`: Spam content detection
   - `inappropriate_content_filter.py`: Content moderation
 

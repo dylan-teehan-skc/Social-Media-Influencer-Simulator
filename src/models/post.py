@@ -25,10 +25,9 @@ class Sentiment(Enum):
 
 
 class Comment(QObject):
-    """Comment model representing a comment on a post."""
+    # Comment model representing a comment on a post
 
     def __init__(self, content, sentiment, author):
-        """Initialize a comment with content, sentiment, and author."""
         super().__init__()
         self._content = content
         self._sentiment = sentiment
@@ -37,26 +36,21 @@ class Comment(QObject):
 
     @property
     def content(self):
-        """Get the comment content."""
         return self._content
 
     @property
     def sentiment(self):
-        """Get the comment sentiment."""
         return self._sentiment
 
     @property
     def author(self):
-        """Get the comment author."""
         return self._author
 
     @property
     def timestamp(self):
-        """Get the comment timestamp."""
         return self._timestamp
 
     def to_dict(self) -> dict:
-        """Convert comment to dictionary format."""
         return {
             "content": self.content,
             "sentiment": self.sentiment.value,
@@ -67,9 +61,9 @@ class Comment(QObject):
 
 # pylint: disable=R0902
 class Post(QObject):
-    """Post model representing a social media post."""
+    # Post model representing a social media post with engagement metrics
 
-    # Signals
+    # Signals for UI updates
     likes_changed = pyqtSignal(int)
     shares_changed = pyqtSignal(int)
     comments_changed = pyqtSignal(list)
@@ -78,7 +72,7 @@ class Post(QObject):
     followers_lost_changed = pyqtSignal(int)
 
     def __init__(self, content, author=None, image_path=None):
-        """Initialize a post with content, author, and optional image path."""
+        # Initialize a post with content, author, and optional image
         super().__init__()
         self._content = content
         self._author = author
@@ -102,62 +96,51 @@ class Post(QObject):
 
     @property
     def content(self):
-        """Get the post content."""
         return self._content
 
     @content.setter
     def content(self, value):
-        """Set the post content. Only used by builders."""
         self._content = value
 
     @property
     def author(self):
-        """Get the post author."""
         return self._author
 
     @author.setter
     def author(self, value):
-        """Set the post author. Only used by builders."""
         self._author = value
 
     @property
     def image_path(self):
-        """Get the post image path."""
         return self._image_path
 
     @image_path.setter
     def image_path(self, value):
-        """Set the post image path. Only used by builders."""
         self._image_path = value
 
     @property
     def timestamp(self):
-        """Get the post timestamp."""
         return self._timestamp
 
     @property
     def likes(self):
-        """Get the post likes."""
         return self._likes
 
     @property
     def shares(self):
-        """Get the post shares."""
         return self._shares
 
     @property
     def comments(self):
-        """Get the post comments."""
         return self._comments.copy()
 
     @property
     def sentiment(self):
-        """Get the post sentiment."""
         return self._sentiment
 
     @sentiment.setter
     def sentiment(self, value):
-        """Set the post sentiment."""
+        # Set the post sentiment and emit change signal
         old_sentiment = self._sentiment
         self._sentiment = value
 
@@ -168,69 +151,67 @@ class Post(QObject):
 
     @property
     def followers_gained(self):
-        """Get the followers gained from this post."""
         return self._followers_gained
 
     @property
     def followers_lost(self):
-        """Get the followers lost from this post."""
         return self._followers_lost
 
     @property
     def is_spam(self):
-        """Check if the post is marked as spam."""
+        # Check if the post is marked as spam
         return self._is_spam
 
     @is_spam.setter
     def is_spam(self, value):
-        """Mark the post as spam or not."""
+        # Mark the post as spam or not
         self._is_spam = value
 
     @property
     def is_valid(self):
-        """Check if the post is valid."""
+        # Check if the post is valid
         return self._is_valid
 
     @is_valid.setter
     def is_valid(self, value):
-        """Mark the post as valid or not."""
+        # Mark the post as valid or not
         self._is_valid = value
 
     def _increment_likes(self):
-        """Increment the like count. Should only be called by PostController."""
+        # Increment the like count (called by PostController)
         self._likes += 1
         self.likes_changed.emit(self._likes)
 
     def _decrement_likes(self):
-        """Decrement the like count. Should only be called by PostController."""
+        # Decrement the like count (called by PostController)
         if self._likes > 0:
             self._likes -= 1
             self.likes_changed.emit(self._likes)
 
     def _increment_shares(self):
-        """Increment the share count. Should only be called by PostController."""
+        # Increment the share count (called by PostController)
         self._shares += 1
         self.shares_changed.emit(self._shares)
 
     def _decrement_shares(self):
-        """Decrement the share count. Should only be called by PostController."""
+        # Decrement the share count (called by PostController)
         if self._shares > 0:
             self._shares -= 1
             self.shares_changed.emit(self._shares)
 
     def _add_comment(self, comment):
-        """Add a comment to the post. Should only be called by PostController."""
+        # Add a comment to the post (called by PostController)
         self._comments.append(comment)
         self.comments_changed.emit(self._comments.copy())
 
     def _remove_comment(self, comment):
-        """Remove a comment from the post. Should only be called by PostController."""
+        # Remove a comment from the post (called by PostController)
         if comment in self._comments:
             self._comments.remove(comment)
             self.comments_changed.emit(self._comments.copy())
 
     def _add_follower_lost(self):
-        """Increment the followers lost count."""
+        # Track a follower lost due to this post
         self._followers_lost += 1
         self.followers_lost_changed.emit(self._followers_lost)
         self.logger.debug(
@@ -238,7 +219,7 @@ class Post(QObject):
         )
 
     def _add_follower_gained(self):
-        """Increment the followers gained count."""
+        # Track a follower gained due to this post
         self._followers_gained += 1
         self.followers_gained_changed.emit(self._followers_gained)
         self.logger.debug(
@@ -248,5 +229,5 @@ class Post(QObject):
 
     @classmethod
     def _create(cls, content: str):
-        """Create a new post with content. Only used by builders."""
+        # Factory method used by builders
         return cls(content)

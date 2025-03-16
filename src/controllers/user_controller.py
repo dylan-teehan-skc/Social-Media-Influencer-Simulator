@@ -20,16 +20,13 @@ from src.services.logger_service import LoggerService
 
 
 class UserController:
-    """Controller for User model operations."""
+    # Controller for User model operations
 
     def __init__(self, user=None):
-        """Initialize with a user model."""
         self.user = user or User("default_user", "Default bio")
         self.logger = LoggerService.get_logger()
         self.follower_controller = FollowerController()
-        self.post_controller = (
-            PostController()
-        )  # Make sure this is initialized
+        self.post_controller = PostController()
 
         # Initialize the dispatcher and add interceptors
         self.dispatcher = Dispatcher()
@@ -38,17 +35,9 @@ class UserController:
         self.dispatcher.add_interceptor(InappropriateContentFilter())
 
     def create_post(self, content, image_path=None, parent_widget=None):
-        """
-        Create a new post for the user.
+        # Create a new post for the user
+        # Returns the created post, or None if creation failed
 
-        Args:
-            content: The content of the post
-            image_path: Optional path to an image to include in the post
-            parent_widget: Optional parent widget for displaying warning dialogs
-
-        Returns:
-            The created post, or None if creation failed
-        """
         # Use the factory to create the appropriate post builder
         factory = PostBuilderFactory()
 
@@ -212,7 +201,7 @@ class UserController:
                         main_controller.main_window.update_user_profile()
 
     def remove_follower(self, follower):
-        """Remove a follower from the user."""
+        # Remove a follower from the user
         if follower in self.user._followers:
             self.user._followers.remove(follower)
             self.user._follower_count -= 1
@@ -227,19 +216,9 @@ class UserController:
             )
 
     def generate_new_followers(self, post, count=None):
-        """
-        Generate new followers based on a post.
-
-        Args:
-            post: The post that might attract followers.
-            count: Optional number of followers to try to generate. If None, uses a default value.
-
-        Returns:
-            Number of new followers gained.
-        """
+        # Generate new followers based on a post
         if count is None:
             # Default to a number based on current follower count
-            # More followers = more potential new followers
             base_count = 5
             follower_bonus = min(15, self.user._follower_count // 10)
             count = base_count + follower_bonus
@@ -271,7 +250,7 @@ class UserController:
         return new_followers
 
     def update_reputation(self, initial_followers, post):
-        """Update reputation based on follower losses from a post."""
+        # Update reputation based on follower losses from a post
         if self.user._follower_count < initial_followers:
             lost_followers = initial_followers - self.user._follower_count
             self.user._recent_follower_losses += lost_followers
@@ -305,7 +284,7 @@ class UserController:
         return 0
 
     def update_reputation_recovery(self, current_time=None):
-        """Recover reputation over time."""
+        # Recover reputation over time
         if current_time is None:
             current_time = (
                 datetime.now().timestamp() * 1000
@@ -331,7 +310,7 @@ class UserController:
             self.user._last_reputation_check = current_time
 
     def edit_post(self, post, new_content=None, new_image_path=None):
-        """Edit a post."""
+        # Edit a post
         if post in self.user._posts:
             if new_content:
                 post.content = new_content
@@ -343,7 +322,7 @@ class UserController:
             )
 
     def delete_post(self, post):
-        """Delete a post."""
+        # Delete a post
         if post in self.user._posts:
             self.user._posts.remove(post)
             self.logger.info(
@@ -351,7 +330,7 @@ class UserController:
             )
 
     def update_profile(self, handle=None, bio=None, profile_picture_path=None):
-        """Update the user's profile."""
+        # Update the user's profile
         if handle:
             self.user.handle = handle
         if bio:
@@ -367,19 +346,10 @@ class UserController:
         return self.user
 
     def notify_followers(self, post):
-        """
-        Notify all followers about a new post.
-
-        Args:
-            post: The post to notify followers about.
-
-        Returns:
-            Number of followers who unfollowed due to the post.
-        """
+        # Notify all followers about a new post
         unfollowed_count = 0
 
-        # Use a copy of the followers list to avoid modification during
-        # iteration
+        # Use a copy of the followers list to avoid modification during iteration
         for follower in self.user._followers.copy():
             # Use the follower controller to update the follower
             if self.follower_controller.update_follower(

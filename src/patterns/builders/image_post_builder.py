@@ -9,21 +9,27 @@ if TYPE_CHECKING:
 
 
 class ImagePostBuilder(BasePostBuilder):
+    # Builder for creating posts with images
+
     def __init__(self):
         super().__init__("ImagePostBuilder")
         self.logger = LoggerService.get_logger()
         self.logger.debug("Initialized ImagePostBuilder")
 
     def set_content(self, content: str) -> "ImagePostBuilder":
+        # Override to maintain correct return type
         return super().set_content(content)
 
     def set_author(self, author: "User") -> "ImagePostBuilder":
+        # Override to maintain correct return type
         return super().set_author(author)
 
     def set_image(self, image_path: str) -> "ImagePostBuilder":
+        # Override to maintain correct return type
         return super().set_image(image_path)
 
     def build(self) -> Post:
+        # Build and return the final image post
         self._apply_common_attributes()
         if not self._image_path:
             self.logger.warning(

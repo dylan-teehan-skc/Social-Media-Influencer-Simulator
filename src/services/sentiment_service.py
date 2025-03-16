@@ -6,16 +6,15 @@ from dotenv import load_dotenv
 
 
 class SentimentService:
-    """Service for analyzing sentiment of content using Google Gemini."""
+    # Service for analyzing sentiment of content using Google Gemini
 
     def __init__(self):
-        """Initialize the sentiment service with Google Gemini."""
         self.logger = logging.getLogger("Social Media Simulator")
 
         # Load environment variables
         load_dotenv()
 
-        # Initialize Google Gemini
+        # Initialize Google Gemini API
         try:
             import google.generativeai as genai
 
@@ -25,9 +24,8 @@ class SentimentService:
                 self.genai = genai
                 self.logger.info("Google Gemini API configured successfully")
 
-                # Use the recommended model
+                # Set up the model
                 try:
-                    # Use the specific model recommended in the error message
                     self.model = genai.GenerativeModel("gemini-1.5-flash")
                     self.logger.info("Using model: gemini-1.5-flash")
                 except Exception as e:
@@ -45,25 +43,16 @@ class SentimentService:
             self.genai = None
 
     def analyze_sentiment(self, content):
-        """
-        Analyze the political sentiment of the content using Google Gemini.
-        Returns a float between -1.0 (very liberal/left) and 1.0 (very conservative/right).
-        """
+        # Analyze political sentiment: -1.0 (left) to 1.0 (right)
         self.logger.info(f"Analyzing sentiment for: '{content}'")
 
-        # Use Google Gemini for sentiment analysis
         result = self.analyze_with_gemini(content)
-
-        # Log the result
         self.logger.info(f"Gemini sentiment analysis result: {result}")
 
         return result
 
     def analyze_with_gemini(self, content):
-        """
-        Analyze the political sentiment of the content using Google Gemini.
-        Returns a float between -1.0 (very liberal/left) and 1.0 (very conservative/right).
-        """
+        # Check if Gemini is available
         if (
             not hasattr(self, "genai")
             or not self.genai
@@ -75,7 +64,7 @@ class SentimentService:
             return 0.0
 
         try:
-            # Create a prompt for the AI
+            # Create prompt for political sentiment analysis
             prompt = f"""
             Analyze the political sentiment of the following text.
             Return ONLY a number between -1.0 (very liberal/left) and 1.0 (very conservative/right).
@@ -84,7 +73,7 @@ class SentimentService:
             "I support universal healthcare" -> -0.7
             "We need stronger border security" -> 0.7
             "The weather is nice today" -> 0.0
-            "fuck the libs" -> 0.9
+            "I hate the libs" -> 0.9
             "conservatives are ruining this country" -> -0.9
 
             Text to analyze: {content}
@@ -92,17 +81,17 @@ class SentimentService:
             Response (ONLY a number between -1.0 and 1.0):
             """
 
-            # Generate content with the specified model
+            # Get response from model
             response = self.model.generate_content(prompt)
             response_text = response.text
 
             self.logger.info(f"Gemini raw response: {response_text}")
 
-            # Extract the sentiment value using regex
+            # Extract the numeric value
             match = re.search(r"(-?\d+(\.\d+)?)", response_text)
             if match:
                 sentiment_value = float(match.group(1))
-                # Ensure the value is between -1.0 and 1.0
+                # Ensure value is in valid range
                 sentiment_value = max(-1.0, min(1.0, sentiment_value))
                 self.logger.info(
                     f"Extracted sentiment value: {sentiment_value}"

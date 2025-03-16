@@ -8,7 +8,7 @@ from src.services.logger_service import LoggerService
 
 
 class FollowerController(QObject):
-    """Controller for follower-related operations."""
+    # Controller for managing followers and their interactions
 
     # Signals
     follower_added = pyqtSignal(object)  # Emitted when a follower is added
@@ -19,7 +19,7 @@ class FollowerController(QObject):
     MAX_FOLLOWERS_PER_POST = 10
 
     def __init__(self, user_controller, post_controller):
-        """Initialize the follower controller with user and post controllers."""
+        # Initialize with user and post controllers
         super().__init__()
         self._user_controller = user_controller
         self._post_controller = post_controller
@@ -29,12 +29,12 @@ class FollowerController(QObject):
         self._post_controller.post_created.connect(self._on_post_created)
 
     def initialize(self):
-        """Initialize the follower controller."""
+        # Set up the controller and create initial followers
         self._logger.info("Follower controller initialized")
         self._create_initial_followers()
 
     def _create_initial_followers(self):
-        """Create initial followers for the user."""
+        # Create starter followers with different political leanings
         initial_followers = [
             Follower(Sentiment.LEFT, "leftie_123"),
             Follower(Sentiment.RIGHT, "conservative_guy"),
@@ -50,7 +50,7 @@ class FollowerController(QObject):
         )
 
     def _on_post_created(self, post):
-        """Handle post creation event."""
+        # Handle new post event and generate followers
         self._logger.info(
             f"Processing new post with sentiment: {post.sentiment.name}"
         )
@@ -76,9 +76,8 @@ class FollowerController(QObject):
             self._logger.warning(f"Lost {lost_followers} followers from post")
 
     def _generate_and_process_followers(self, post, follow_chance):
-        """Generate and process potential followers for a post."""
+        # Create new followers based on post quality and sentiment
         # Calculate how many potential followers to generate
-        # Increase the base number and apply a multiplier to the follow chance
         adjusted_follow_chance = min(
             100, follow_chance * 1.5
         )  # Increase follow chance by 50%
@@ -124,9 +123,7 @@ class FollowerController(QObject):
             self._logger.warning("No new followers gained from post")
 
     def _create_potential_follower(self, index):
-        """Create a potential follower that's more likely to align with the post's sentiment."""
-        # Create followers with a mix of sentiments, but biased toward the
-        # post's sentiment
+        # Create a follower with sentiment biased toward the post's sentiment
         if (
             hasattr(self, "_current_post_sentiment")
             and self._current_post_sentiment

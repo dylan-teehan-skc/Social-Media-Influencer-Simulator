@@ -4,10 +4,10 @@ from PyQt6.QtCore import QObject, QTimer
 
 
 class AppController(QObject):
-    """Main application controller that coordinates other controllers."""
+    # Main controller that coordinates other controllers
 
     def __init__(self, user_controller, post_controller, follower_controller):
-        """Initialize the app controller with other controllers."""
+        # Initialize with all required controllers
         super().__init__()
         self._user_controller = user_controller
         self._post_controller = post_controller
@@ -22,18 +22,17 @@ class AppController(QObject):
         self._last_reputation_update = datetime.now().timestamp() * 1000
 
     def start(self):
-        """Start the application."""
-        # Initialize controllers
+        # Start the application and initialize all controllers
         self._user_controller.initialize()
         self._post_controller.initialize()
         self._follower_controller.initialize()
 
     def shutdown(self):
-        """Shutdown the application."""
+        # Stop timers and clean up resources
         self._timer.stop()
 
     def _update_state(self):
-        """Update application state periodically."""
+        # Update application state periodically
         current_time = datetime.now().timestamp() * 1000
 
         # Update reputation every 30 seconds

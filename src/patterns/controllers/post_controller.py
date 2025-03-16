@@ -6,13 +6,13 @@ from src.services.sentiment_service import SentimentService
 
 
 class PostController(QObject):
-    """Controller for post-related operations."""
+    # Controller for post-related operations
 
     # Signals
     post_created = pyqtSignal(object)  # Emitted when a post is created
 
     def __init__(self, user_controller, sentiment_service=None):
-        """Initialize the post controller with a user controller and optional sentiment service."""
+        # Initialize with user controller and sentiment service
         super().__init__()
         self._user_controller = user_controller
         self._sentiment_service = sentiment_service or SentimentService()
@@ -20,11 +20,11 @@ class PostController(QObject):
         self._posts = []
 
     def initialize(self):
-        """Initialize the post controller."""
+        # Set up the controller
         self._logger.info("Post controller initialized")
 
     def create_post(self, content, image_path=None):
-        """Create a new post."""
+        # Create a new post with content and optional image
         user = self._user_controller.get_user()
 
         # Create post using builder factory
@@ -84,30 +84,30 @@ class PostController(QObject):
         return post, initial_followers
 
     def get_posts(self):
-        """Get all posts."""
+        # Return a copy of all posts
         return self._posts.copy()
 
     def add_comment(self, post, comment):
-        """Add a comment to a post."""
+        # Add a comment to a post
         post.add_comment(comment)
         self._logger.debug(f"Comment added to post: {comment.content[:30]}...")
 
     def like_post(self, post):
-        """Like a post."""
+        # Increment post likes
         post.like()
         self._logger.debug(f"Post liked, total likes: {post.likes}")
 
     def unlike_post(self, post):
-        """Unlike a post."""
+        # Decrement post likes
         post.unlike()
         self._logger.debug(f"Post unliked, total likes: {post.likes}")
 
     def share_post(self, post):
-        """Share a post."""
+        # Increment post shares
         post.share()
         self._logger.debug(f"Post shared, total shares: {post.shares}")
 
     def unshare_post(self, post):
-        """Unshare a post."""
+        # Decrement post shares
         post.unshare()
         self._logger.debug(f"Post unshared, total shares: {post.shares}")

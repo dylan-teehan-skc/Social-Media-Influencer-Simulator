@@ -14,15 +14,14 @@ except ImportError:
 
 
 class PostController:
-    """Controller for Post model operations."""
+    # Controller for Post model operations
 
     def __init__(self):
-        """Initialize the post controller."""
         self.logger = LoggerService.get_logger()
         self.sentiment_service = SentimentService()
 
     def like_post(self, post):
-        """Like a post."""
+        # Like a post
         if post:
             post._increment_likes()
             self.logger.info(f"Post liked: {post.content[:30]}...")
@@ -50,7 +49,7 @@ class PostController:
         return False
 
     def unlike_post(self, post):
-        """Unlike a post."""
+        # Unlike a post
         if post:
             post._decrement_likes()
             self.logger.info(f"Post unliked: {post.content[:30]}...")
@@ -58,7 +57,7 @@ class PostController:
         return False
 
     def share_post(self, post):
-        """Share a post."""
+        # Share a post
         if post:
             post._increment_shares()
             self.logger.info(f"Post shared: {post.content[:30]}...")
@@ -87,7 +86,7 @@ class PostController:
         return False
 
     def unshare_post(self, post):
-        """Unshare a post."""
+        # Unshare a post
         if post:
             post._decrement_shares()
             self.logger.info(f"Post unshared: {post.content[:30]}...")
@@ -95,7 +94,7 @@ class PostController:
         return False
 
     def comment_on_post(self, post, content, sentiment, author):
-        """Add a comment to a post."""
+        # Add a comment to a post
         if post and content:
             comment = Comment(content, sentiment, author)
             post._add_comment(comment)
@@ -124,7 +123,7 @@ class PostController:
         return None
 
     def add_follower_gained(self, post):
-        """Track a follower gained from a post."""
+        # Track a follower gained from a post
         if post:
             post._add_follower_gained()
             self.logger.info(
@@ -134,7 +133,7 @@ class PostController:
         return False
 
     def add_follower_lost(self, post):
-        """Track a follower lost from a post."""
+        # Track a follower lost from a post
         if post:
             post._add_follower_lost()
             self.logger.info(
@@ -144,15 +143,7 @@ class PostController:
         return False
 
     def analyze_sentiment(self, content):
-        """
-        Analyze the sentiment of the content using only Google AI.
-
-        Args:
-            content: The content to analyze.
-
-        Returns:
-            A Sentiment enum value.
-        """
+        # Analyze the sentiment of the content using only Google AI
         try:
             # Use the sentiment service for AI-based analysis only
             sentiment_result = self.sentiment_service.analyze_sentiment(
@@ -198,9 +189,10 @@ class PostController:
             return Sentiment.NEUTRAL
 
     def initial_impressions(self, post):
-        """Analyze initial impressions of a post based on its sentiment."""
+        # Analyze initial impressions of a post based on its sentiment
         try:
             if not post:
+                self.logger.warning("Cannot analyze impressions: post is None")
                 return False
 
             self.logger.info(
@@ -228,7 +220,7 @@ class PostController:
             return False
 
     def _adjust_followers_based_on_sentiment(self, post):
-        """Adjust followers gained/lost based on post sentiment and user's follower count."""
+        # Adjust followers gained/lost based on post sentiment and user's follower count
         if not post or not post.author:
             return
 
@@ -241,8 +233,6 @@ class PostController:
 
         # Calculate a scaling factor based on follower count
         # More followers = more potential for both gains and losses
-        # Start with a base of 1.0 and add 0.1 for every 10 followers, up to a
-        # maximum of 5.0
         scaling_factor = min(5.0, 1.0 + (user_followers / 100))
 
         self.logger.info(
@@ -315,7 +305,7 @@ class PostController:
             return Sentiment.NEUTRAL
 
     def get_post_stats(self, post):
-        """Get statistics for a post."""
+        # Get statistics for a post
         if not post:
             return None
 
@@ -327,16 +317,7 @@ class PostController:
         }
 
     def get_trending_posts(self, posts=None, limit=5):
-        """
-        Get trending posts based on engagement.
-
-        Args:
-            posts: List of posts to analyze. If None, will try to get posts from all users.
-            limit: Maximum number of posts to return.
-
-        Returns:
-            List of trending posts sorted by engagement score.
-        """
+        # Get trending posts based on engagement
         if posts is None:
             # If no posts are provided, try to get posts from the main
             # controller

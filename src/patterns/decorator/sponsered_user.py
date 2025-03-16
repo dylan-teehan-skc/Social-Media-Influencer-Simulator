@@ -2,6 +2,8 @@ from src.patterns.interfaces.user_decorator import UserDecorator
 
 
 class SponsoredUser(UserDecorator):
+    # Decorator that adds sponsorship information to a user
+
     def __init__(self, user, company_name: str):
         super().__init__(user)
         self.company_name = company_name
@@ -29,6 +31,6 @@ class SponsoredUser(UserDecorator):
     def followers(self):
         return self._user.followers
 
-    # Ensure all user attributes are properly forwarded
+    # Forward all other attributes to the decorated user
     def __getattr__(self, name):
         return getattr(self._user, name)
