@@ -1,8 +1,3 @@
-"""
-Style manager for handling application themes and styling.
-This module handles light and dark theme management within the views directory.
-"""
-
 import os
 
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -10,7 +5,6 @@ from PyQt6.QtWidgets import QApplication
 
 
 class StyleManager(QObject):
-    """Manages application themes (dark/light mode)"""
 
     # Signal emitted when theme changes
     theme_changed = pyqtSignal(str)
@@ -20,7 +14,6 @@ class StyleManager(QObject):
 
     @classmethod
     def get_instance(cls):
-        """Get the singleton instance of StyleManager"""
         if cls._instance is None:
             cls._instance = StyleManager()
         return cls._instance
@@ -34,7 +27,6 @@ class StyleManager(QObject):
         self._ensure_style_directories()
 
     def _ensure_style_directories(self):
-        """Ensure necessary directories exist for storing styles"""
         # Get the views directory path
         views_dir = os.path.dirname(os.path.abspath(__file__))
 

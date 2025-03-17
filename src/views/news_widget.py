@@ -18,7 +18,6 @@ from src.views.style_manager import StyleManager
 
 
 class NewsWidget(QWidget):
-    """Widget to display news and sponsorship opportunities"""
 
     def __init__(self, user=None, parent=None):
         super().__init__(parent)

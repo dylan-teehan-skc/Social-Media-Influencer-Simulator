@@ -1,7 +1,3 @@
-"""
-This module imports and re-exports the view components for easier imports.
-"""
-
 from src.views.create_post_widget import CreatePostWidget
 from src.views.feed_widget import FeedWidget
 from src.views.follower_list_widget import FollowerListWidget

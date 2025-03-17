@@ -5,7 +5,6 @@ from src.views.style_manager import StyleManager
 
 
 class ThemeSwitcherWidget(QWidget):
-    """Widget for switching between dark and light themes using a slider"""
 
     def __init__(self):
         super().__init__()
@@ -64,5 +63,5 @@ class ThemeSwitcherWidget(QWidget):
 
     @pyqtSlot(str)
     def on_theme_changed(self, theme):
-        """Handle theme changes from external sources"""
+        # Handle theme changes from external sources
         self.update_slider_position()

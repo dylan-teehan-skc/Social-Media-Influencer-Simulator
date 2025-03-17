@@ -10,7 +10,6 @@ from src.views.post_widget import PostWidget
 
 
 class FeedWidget(QWidget):
-    """Widget to display a feed of posts"""
 
     def __init__(self, user=None, parent=None):
         super().__init__(parent)

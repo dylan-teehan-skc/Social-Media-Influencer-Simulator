@@ -16,8 +16,6 @@ from src.patterns.decorator.sponsered_user import SponsoredUser
 
 
 class CreatePostWidget(QWidget):
-    """Widget to create a new post"""
-
     # Signal emitted when a post is created
     post_created = pyqtSignal()
 

@@ -16,7 +16,6 @@ from src.views.style_manager import StyleManager
 
 
 class FollowerListDialog(QDialog):
-    """Dialog to display a scrollable list of followers"""
 
     def __init__(self, followers, parent=None):
         super().__init__(parent)
