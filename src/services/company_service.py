@@ -2,6 +2,7 @@ from src.models.company import Company
 from src.models.post import Sentiment
 from src.patterns.decorator.sponsered_user import SponsoredUser
 from src.patterns.decorator.verified_user import VerifiedUser
+from src.services.logger_service import LoggerService
 
 
 class CompanyService:
@@ -18,6 +19,7 @@ class CompanyService:
 
     def __init__(self):
         self._companies = self._create_default_companies()
+        self.logger = LoggerService.get_logger()
 
     def _create_default_companies(self):
         return [
